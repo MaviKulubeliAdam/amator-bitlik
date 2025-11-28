@@ -930,13 +930,8 @@ function openDetailPanel(listing) {
     </div>
   `;
 
-  // Modal'ı #ativ-container içine ekle - CSS stilleri için gerekli
-  const ativContainer = document.getElementById('ativ-container');
-  if (ativContainer) {
-    ativContainer.appendChild(detailModal);
-  } else {
-    document.body.appendChild(detailModal);
-  }
+  // Modal'ı body'ye ekle - fixed positioning için gerekli
+  document.body.appendChild(detailModal);
   document.body.style.overflow = 'hidden';
 
   // Slider'ı başlat (eğer görsel varsa)
