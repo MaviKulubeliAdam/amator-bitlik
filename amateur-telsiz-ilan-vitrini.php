@@ -116,13 +116,19 @@ class AmateurTelsizIlanVitrini {
 }
     
    private function enqueue_scripts() {
-    // Script ve style'ları kaydet ama henüz yükleme
-    wp_register_script('ativ-script', ATIV_PLUGIN_URL . 'js/script.js', array('jquery'), '1.1', true);
-    wp_register_style('ativ-style', ATIV_PLUGIN_URL . 'css/style.css', array(), '1.1');
+    // Modüler CSS dosyalarını kaydet (base, components, forms)
+    wp_register_style('ativ-base', ATIV_PLUGIN_URL . 'css/base.css', array(), '1.1');
+    wp_register_style('ativ-components', ATIV_PLUGIN_URL . 'css/components.css', array('ativ-base'), '1.1');
+    wp_register_style('ativ-forms', ATIV_PLUGIN_URL . 'css/forms.css', array('ativ-components'), '1.1');
+    
+    // Modüler JS dosyalarını kaydet (core, modal, ui - sıralama önemli)
+    wp_register_script('ativ-core', ATIV_PLUGIN_URL . 'js/core.js', array('jquery'), '1.1', true);
+    wp_register_script('ativ-ui', ATIV_PLUGIN_URL . 'js/ui.js', array('ativ-core'), '1.1', true);
+    wp_register_script('ativ-modal', ATIV_PLUGIN_URL . 'js/modal.js', array('ativ-ui'), '1.1', true);
     
     $current_user_id = get_current_user_id();
     
-    wp_localize_script('ativ-script', 'ativ_ajax', array(
+    wp_localize_script('ativ-core', 'ativ_ajax', array(
         'url' => admin_url('admin-ajax.php'),
         'nonce' => $current_user_id ? wp_create_nonce('ativ_nonce_' . $current_user_id) : wp_create_nonce('ativ_public_nonce'),
         'public_nonce' => wp_create_nonce('ativ_public_nonce'),
@@ -135,8 +141,12 @@ class AmateurTelsizIlanVitrini {
     public function display_listings() {
         // Script ve style'ları yükle
         $this->enqueue_scripts();
-        wp_enqueue_script('ativ-script');
-        wp_enqueue_style('ativ-style');
+        wp_enqueue_style('ativ-base');
+        wp_enqueue_style('ativ-components');
+        wp_enqueue_style('ativ-forms');
+        wp_enqueue_script('ativ-core');
+        wp_enqueue_script('ativ-ui');
+        wp_enqueue_script('ativ-modal');
         
         ob_start();
         ?>
@@ -175,8 +185,12 @@ class AmateurTelsizIlanVitrini {
 
         // Script ve style'ları yükle
         $this->enqueue_scripts();
-        wp_enqueue_script('ativ-script');
-        wp_enqueue_style('ativ-style');
+        wp_enqueue_style('ativ-base');
+        wp_enqueue_style('ativ-components');
+        wp_enqueue_style('ativ-forms');
+        wp_enqueue_script('ativ-core');
+        wp_enqueue_script('ativ-ui');
+        wp_enqueue_script('ativ-modal');
 
         ob_start();
         include ATIV_PLUGIN_PATH . 'templates/my-listings.php';
