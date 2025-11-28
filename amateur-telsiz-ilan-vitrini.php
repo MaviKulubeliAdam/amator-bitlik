@@ -21,7 +21,7 @@ class AmateurTelsizIlanVitrini {
     
     public function __construct() {
         add_action('init', array($this, 'init'));
-        add_action('wp_enqueue_scripts', array($this, 'enqueue_scripts'));
+        // CSS ve JS'i sadece shortcode kullanıldığında yükle
         add_shortcode('amator_telsiz_ilan', array($this, 'display_listings'));
         // Kullanıcının kendi ilanlarını gösteren shortcode
         add_shortcode('amator_my_listings', array($this, 'display_my_listings'));
@@ -115,9 +115,10 @@ class AmateurTelsizIlanVitrini {
     }
 }
     
-   public function enqueue_scripts() {
-    wp_enqueue_script('ativ-script', ATIV_PLUGIN_URL . 'js/script.js', array('jquery'), '1.1', true);
-    wp_enqueue_style('ativ-style', ATIV_PLUGIN_URL . 'css/style.css', array(), '1.1');
+   private function enqueue_scripts() {
+    // Script ve style'ları kaydet ama henüz yükleme
+    wp_register_script('ativ-script', ATIV_PLUGIN_URL . 'js/script.js', array('jquery'), '1.1', true);
+    wp_register_style('ativ-style', ATIV_PLUGIN_URL . 'css/style.css', array(), '1.1');
     
     $current_user_id = get_current_user_id();
     
@@ -132,20 +133,22 @@ class AmateurTelsizIlanVitrini {
 }
     
     public function display_listings() {
-    wp_enqueue_script('ativ-script');
-    wp_enqueue_style('ativ-style');
-    
-    ob_start();
-    ?>
-    <div id="ativ-container">
-        <?php 
-        // Sadece oturum açmış kullanıcılar için ilan ekleme butonunu göster
-        $show_add_button = is_user_logged_in();
-        include ATIV_PLUGIN_PATH . 'templates/index.php'; 
+        // Script ve style'ları yükle
+        $this->enqueue_scripts();
+        wp_enqueue_script('ativ-script');
+        wp_enqueue_style('ativ-style');
+        
+        ob_start();
         ?>
-    </div>
-    <?php
-    return ob_get_clean();
+        <div id="ativ-container">
+            <?php 
+            // Sadece oturum açmış kullanıcılar için ilan ekleme butonunu göster
+            $show_add_button = is_user_logged_in();
+            include ATIV_PLUGIN_PATH . 'templates/index.php'; 
+            ?>
+        </div>
+        <?php
+        return ob_get_clean();
     }
 
     // Kullanıcının kendi ilanlarını gösteren sayfa (shortcode)
@@ -170,6 +173,8 @@ class AmateurTelsizIlanVitrini {
         }
         unset($listing); // Reference'i temizle
 
+        // Script ve style'ları yükle
+        $this->enqueue_scripts();
         wp_enqueue_script('ativ-script');
         wp_enqueue_style('ativ-style');
 
