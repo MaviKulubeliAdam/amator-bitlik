@@ -428,7 +428,13 @@ window.confirmDeleteListing = async function(id) {
     </div>
   `;
 
-  document.body.appendChild(modal);
+  // Modal'ı #ativ-container içine ekle - CSS stilleri için gerekli
+  const ativContainer = document.getElementById('ativ-container');
+  if (ativContainer) {
+    ativContainer.appendChild(modal);
+  } else {
+    document.body.appendChild(modal);
+  }
   document.body.style.overflow = 'hidden';
 
   document.getElementById('deleteCancelBtn').addEventListener('click', () => {
@@ -526,7 +532,13 @@ function openLightbox(images, startIndex = 0, source = 'detail') {
     </div>
   `;
   
-  document.body.insertAdjacentHTML('beforeend', lightboxHTML);
+  // Lightbox'ı #ativ-container içine ekle - CSS stilleri için gerekli
+  const ativContainer = document.getElementById('ativ-container');
+  if (ativContainer) {
+    ativContainer.insertAdjacentHTML('beforeend', lightboxHTML);
+  } else {
+    document.body.insertAdjacentHTML('beforeend', lightboxHTML);
+  }
   document.body.style.overflow = 'hidden';
   
   // Klavye event listener'larını ekle
@@ -918,7 +930,13 @@ function openDetailPanel(listing) {
     </div>
   `;
 
-  document.body.appendChild(detailModal);
+  // Modal'ı #ativ-container içine ekle - CSS stilleri için gerekli
+  const ativContainer = document.getElementById('ativ-container');
+  if (ativContainer) {
+    ativContainer.appendChild(detailModal);
+  } else {
+    document.body.appendChild(detailModal);
+  }
   document.body.style.overflow = 'hidden';
 
   // Slider'ı başlat (eğer görsel varsa)
