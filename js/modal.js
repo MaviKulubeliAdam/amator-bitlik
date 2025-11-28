@@ -347,9 +347,20 @@ async function handleFormSubmit(e) {
     populateFilterOptions();
     applyFiltersAndRender();
     
+    // "Benim İlanlarım" sayfası grid'ini de yenile (eğer açıksa)
+    const myGrid = document.getElementById('myListingsGrid');
+    if (myGrid) {
+      try {
+        await refreshMyListingsGrid();
+      } catch (err) {
+        console.error('Grid refresh hatası:', err);
+      }
+    }
+    
+    // Basariyi göster ve modal kapat
     setTimeout(() => {
       closeAddListingModal();
-    }, 2000);
+    }, 1500);
   } catch (error) {
     messageDiv.innerHTML = '<div class="error-message">İşlem sırasında bir hata oluştu. Lütfen tekrar deneyin.</div>';
   } finally {
@@ -1032,7 +1043,194 @@ window.goToLightboxSlide = goToLightboxSlide;
 window.toggleZoom = toggleZoom;
 window.openLightbox = openLightbox;
 window.changeSlide = changeSlide;
+
+/**
+ * "Benim İlanlarım" sayfasında silme işlemi
+ */
+async function handleMyListingDelete(id) {
+  if (!confirm('Silmek istediğinizden emin misiniz?')) {
+    return;
+  }
+
+  try {
+    await deleteListing(id);
+    
+    // Silme başarılı, grid'i yenile
+    if (typeof pageType !== 'undefined' && pageType === 'my-listings') {
+      await refreshMyListingsGrid();
+    }
+  } catch (error) {
+    console.error('İlan silinirken hata:', error);
+    alert('İlan silinirken bir hata oluştu. Lütfen tekrar deneyin.');
+  }
+}
+
+/**
+ * "Benim İlanlarım" sayfasını yenile
+ */
+async function refreshMyListingsGrid() {
+  try {
+    console.log('[DEBUG] refreshMyListingsGrid başlıyor...');
+    const gridElement = document.getElementById('myListingsGrid');
+    console.log('[DEBUG] myListingsGrid element:', gridElement);
+    
+    if (!gridElement) {
+      console.error('myListingsGrid elementi bulunamadı!');
+      return;
+    }
+
+    const data = new FormData();
+    data.append('action', 'ativ_ajax');
+    data.append('action_type', 'get_user_listings');
+    data.append('nonce', ativ_ajax.public_nonce);
+
+    const response = await fetch(ativ_ajax.url, {
+      method: 'POST',
+      body: data
+    });
+
+    const result = await response.json();
+
+    console.log('[DEBUG] refreshMyListingsGrid sonuç:', result);
+
+    if (result.success && result.data) {
+      const listings = result.data;
+      const grid = document.getElementById('myListingsGrid');
+      
+      if (grid) {
+        if (listings.length === 0) {
+          grid.innerHTML = '<div class="no-results">Henüz ilanınız yok.</div>';
+        } else {
+          grid.innerHTML = listings.map(listing => {
+            const imageUrl = getListingImageUrl(listing);
+            return `
+              <div class="listing-row-wrapper">
+                <div class="listing-row" data-listing-id="${listing.id}">
+                  <div class="listing-row-image">
+                    ${imageUrl ? `<img src="${imageUrl}" alt="${escapeHtml(listing.title)}">` : `<div class="listing-row-image-fallback">${listing.emoji || '📻'}</div>`}
+                  </div>
+                  <div class="listing-row-info">
+                    <h3 class="listing-row-title" style="cursor: pointer;" onclick="toggleListingDetails(this)">${escapeHtml(listing.title)}</h3>
+                    <p class="listing-row-category">${getCategoryName(listing.category)} • ${escapeHtml(listing.condition)}</p>
+                    <p class="listing-row-details">${escapeHtml(listing.brand)} ${escapeHtml(listing.model)} • ${escapeHtml(listing.callsign)}</p>
+                    <p class="listing-row-date">Yayınlanma: ${formatDate(listing.created_at)}</p>
+                  </div>
+                  <div class="listing-row-price">
+                    <div class="price-amount">${listing.price} ${listing.currency || 'TRY'}</div>
+                  </div>
+                  <div class="listing-row-actions">
+                    <button class="action-btn edit-btn" onclick="event.stopPropagation(); editListing(${listing.id})" title="Düzenle">✏️ Düzenle</button>
+                    <button class="action-btn delete-btn" onclick="event.stopPropagation(); handleMyListingDelete(${listing.id})" title="Sil">🗑️ Sil</button>
+                  </div>
+                </div>
+                <div class="listing-row-details-expanded">
+                  <div class="listing-details-content">
+                    <div class="details-section">
+                      <h4>Ürün Açıklaması</h4>
+                      <p>${(listing.description || '').replace(/\n/g, '<br>')}</p>
+                    </div>
+                    <div class="details-grid">
+                      <div class="detail-item">
+                        <span class="detail-label">Kategori:</span>
+                        <span class="detail-value">${getCategoryName(listing.category)}</span>
+                      </div>
+                      <div class="detail-item">
+                        <span class="detail-label">Durum:</span>
+                        <span class="detail-value">${escapeHtml(listing.condition)}</span>
+                      </div>
+                      <div class="detail-item">
+                        <span class="detail-label">Marka:</span>
+                        <span class="detail-value">${escapeHtml(listing.brand)}</span>
+                      </div>
+                      <div class="detail-item">
+                        <span class="detail-label">Model:</span>
+                        <span class="detail-value">${escapeHtml(listing.model)}</span>
+                      </div>
+                      <div class="detail-item">
+                        <span class="detail-label">Fiyat:</span>
+                        <span class="detail-value">${listing.price} ${listing.currency || 'TRY'}</span>
+                      </div>
+                      <div class="detail-item">
+                        <span class="detail-label">Konum:</span>
+                        <span class="detail-value">${escapeHtml(listing.location)}</span>
+                      </div>
+                    </div>
+                    <div class="details-section">
+                      <h4>Satıcı Bilgileri</h4>
+                      <div class="seller-info">
+                        <p><strong>${escapeHtml(listing.seller_name)}</strong></p>
+                        <p>Çağrı İşareti: ${escapeHtml(listing.callsign)}</p>
+                        <p>E-posta: ${escapeHtml(listing.seller_email)}</p>
+                        <p>Telefon: ${escapeHtml(listing.seller_phone)}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            `;
+          }).join('');
+        }
+      }
+    } else {
+      console.error('İlanlar yenilenirken hata - success false:', result);
+    }
+  } catch (error) {
+    console.error('İlanlar yenilenirken AJAX hatası:', error);
+  }
+}
+
+/**
+ * İlan resim URL'sini döndür
+ */
+function getListingImageUrl(listing) {
+  if (!listing.images || listing.images.length === 0) {
+    return '';
+  }
+  
+  const featuredIndex = parseInt(listing.featured_image_index || 0);
+  const image = listing.images[featuredIndex] || listing.images[0];
+  
+  if (image.data) {
+    return image.data;
+  } else if (image.name) {
+    return ativ_ajax.upload_url + listing.id + '/' + image.name;
+  }
+  
+  return '';
+}
+
+/**
+ * Tarihi formatla
+ */
+function formatDate(dateString) {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('tr-TR', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+}
+
+/**
+ * HTML karakterlerini escape et
+ */
+function escapeHtml(text) {
+  if (!text) return '';
+  const map = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;'
+  };
+  return text.replace(/[&<>"']/g, m => map[m]);
+}
+
 window.goToSlide = goToSlide;
 window.initSlider = initSlider;
 window.openDetailPanel = openDetailPanel;
 window.closeDetailPanel = closeDetailPanel;
+window.handleMyListingDelete = handleMyListingDelete;
+window.refreshMyListingsGrid = refreshMyListingsGrid;

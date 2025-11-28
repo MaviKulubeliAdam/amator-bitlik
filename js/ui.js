@@ -489,16 +489,28 @@ function toggleListingDetails(titleElement) {
 
   // Find the parent listing-row
   const listingRow = titleElement.closest('.listing-row');
-  if (!listingRow) return;
+  if (!listingRow) {
+    console.error('listing-row not found');
+    return;
+  }
 
   // Find the parent wrapper
   const wrapper = listingRow.closest('.listing-row-wrapper');
-  if (!wrapper) return;
+  if (!wrapper) {
+    console.error('listing-row-wrapper not found');
+    return;
+  }
+
+  console.log('Wrapper found:', wrapper);
+  console.log('Wrapper innerHTML:', wrapper.innerHTML);
 
   // Find all accordion sections within this wrapper
   const detailsElement = wrapper.querySelector('.listing-row-details-expanded');
   if (!detailsElement) {
-    console.error('Accordion details element not found in wrapper');
+    console.error('Accordion details element not found in wrapper', {
+      wrapper: wrapper,
+      children: wrapper.children
+    });
     return;
   }
 

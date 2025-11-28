@@ -202,7 +202,7 @@ class AmateurTelsizIlanVitrini {
     
     // Kritik işlemler için oturum ve nonce kontrolü
     $critical_actions = ['save_listing', 'update_listing', 'delete_listing'];
-    $public_actions = ['get_listings', 'get_brands', 'get_locations'];
+    $public_actions = ['get_listings', 'get_brands', 'get_locations', 'get_user_listings'];
     
     if (in_array($action, $critical_actions)) {
         // Kritik işlemler için kullanıcıya özel nonce kontrolü
@@ -227,6 +227,9 @@ class AmateurTelsizIlanVitrini {
     switch($action) {
         case 'get_listings':
             $this->get_listings();
+            break;
+        case 'get_user_listings':
+            $this->get_user_listings();
             break;
         case 'get_brands':
             $this->get_brands();
@@ -272,6 +275,33 @@ class AmateurTelsizIlanVitrini {
     }
     
     wp_send_json_success($listings);
+    }
+
+    private function get_user_listings() {
+        if (!is_user_logged_in()) {
+            wp_send_json_error('Bu işlem için giriş yapmalısınız');
+        }
+
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'amator_ilanlar';
+        $user_id = get_current_user_id();
+
+        $listings = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE user_id = %d ORDER BY created_at DESC", $user_id), ARRAY_A);
+
+        if ($wpdb->last_error) {
+            wp_send_json_error('Veritabanı hatası: ' . $wpdb->last_error);
+        }
+
+        // Görselleri URL formatına çevir
+        foreach ($listings as &$listing) {
+            $listing['images'] = $this->get_listing_images($listing['id'], $listing['images']);
+            
+            if (empty($listing['images'])) {
+                $listing['emoji'] = '📻';
+            }
+        }
+
+        wp_send_json_success($listings);
     }
     
     private function get_listing_images($listing_id, $images_json) {
