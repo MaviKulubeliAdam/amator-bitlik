@@ -31,6 +31,23 @@
             }
           ?>
           <div class="listing-row-wrapper">
+            <!-- Red Uyarısı -->
+            <?php if ($listing['status'] === 'rejected'): ?>
+            <div style="background: #f8d7da; border-left: 4px solid #dc3545; padding: 15px; margin-bottom: 10px; border-radius: 4px;">
+              <div style="flex: 1;">
+                <div style="color: #721c24; margin-bottom: 8px;"><strong>❌ İlan Reddedildi</strong></div>
+                <div style="color: #721c24; font-size: 14px;">
+                  <strong>Red Nedeni:</strong><br>
+                  <?php echo nl2br(esc_html($listing['rejection_reason'] ?? 'Neden belirtilmemiş')); ?>
+                </div>
+              </div>
+            </div>
+            <?php elseif ($listing['status'] === 'pending'): ?>
+            <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin-bottom: 10px; border-radius: 4px;">
+              <div style="color: #856404;"><strong>⏳ Onay Bekliyor</strong> - İlanınız yönetici tarafından incelenmektedir.</div>
+            </div>
+            <?php endif; ?>
+            
             <div class="listing-row" data-listing-id="<?php echo esc_attr($listing['id']); ?>">
               <div class="listing-row-image">
                 <?php if ($image_url): ?>
@@ -49,7 +66,11 @@
                 <div class="price-amount"><?php echo esc_html($listing['price']); ?> <?php echo esc_html($listing['currency'] ?? 'TRY'); ?></div>
               </div>
               <div class="listing-row-actions">
-                <button class="action-btn edit-btn" onclick="event.stopPropagation(); window.editListing(<?php echo intval($listing['id']); ?>)" title="Düzenle">✏️ Düzenle</button>
+                <?php if ($listing['status'] === 'rejected' || $listing['status'] === 'pending'): ?>
+                  <button class="action-btn edit-btn" onclick="event.stopPropagation(); window.editMyListing(<?php echo intval($listing['id']); ?>)" title="Düzenle">✏️ Düzenle</button>
+                <?php else: ?>
+                  <button class="action-btn edit-btn" onclick="event.stopPropagation(); window.editListing(<?php echo intval($listing['id']); ?>)" title="Düzenle">✏️ Düzenle</button>
+                <?php endif; ?>
                 <button class="action-btn delete-btn" onclick="event.stopPropagation(); window.confirmDeleteListing(<?php echo intval($listing['id']); ?>)" title="Sil">🗑️ Sil</button>
               </div>
             </div>

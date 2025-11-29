@@ -104,10 +104,13 @@ class AmateurTelsizIlanVitrini {
         location varchar(100) NOT NULL,
         seller_email varchar(100) NOT NULL,
         seller_phone varchar(20) NOT NULL,
+        status enum('pending', 'approved', 'rejected') DEFAULT 'pending',
+        rejection_reason longtext,
         created_at datetime DEFAULT CURRENT_TIMESTAMP,
         updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         PRIMARY KEY  (id),
-        INDEX user_id (user_id)
+        INDEX user_id (user_id),
+        INDEX status (status)
     ) $charset_collate;";
     
     require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
@@ -232,9 +235,42 @@ class AmateurTelsizIlanVitrini {
         wp_send_json_success('İlan güncellendi');
     }
     
+    // İlan durumunu değiştir (onay/reddet)
+    if ($action === 'ativ_change_listing_status') {
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Yetkisiz erişim');
+        }
+        
+        $id = intval($_POST['id'] ?? 0);
+        $status = sanitize_text_field($_POST['status'] ?? '');
+        $rejection_reason = isset($_POST['rejection_reason']) ? wp_kses_post($_POST['rejection_reason']) : '';
+        
+        if (!in_array($status, ['approved', 'rejected', 'pending'])) {
+            wp_send_json_error('Geçersiz durum');
+        }
+        
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'amator_ilanlar';
+        
+        $update_data = array('status' => $status);
+        if ($status === 'rejected') {
+            $update_data['rejection_reason'] = $rejection_reason;
+        } else {
+            $update_data['rejection_reason'] = null;
+        }
+        
+        $result = $wpdb->update($table_name, $update_data, array('id' => $id));
+        
+        if ($result !== false) {
+            wp_send_json_success('Durum güncellendi');
+        } else {
+            wp_send_json_error('Durum güncellenirken hata oluştu');
+        }
+    }
+    
     // Kritik işlemler için oturum ve nonce kontrolü
-    $critical_actions = ['save_listing', 'update_listing', 'delete_listing'];
-    $public_actions = ['get_listings', 'get_brands', 'get_locations', 'get_user_listings'];
+    $critical_actions = ['save_listing', 'update_listing', 'delete_listing', 'get_user_listings'];
+    $public_actions = ['get_listings', 'get_brands', 'get_locations'];
     
     if (in_array($action, $critical_actions)) {
         // Kritik işlemler için kullanıcıya özel nonce kontrolü
@@ -290,8 +326,8 @@ class AmateurTelsizIlanVitrini {
     global $wpdb;
     $table_name = $wpdb->prefix . 'amator_ilanlar';
     
-    // Varsayılan sıralama: yeniden eskiye
-    $listings = $wpdb->get_results("SELECT * FROM $table_name ORDER BY created_at DESC", ARRAY_A);
+    // Yalnızca onaylı ilanları göster
+    $listings = $wpdb->get_results("SELECT * FROM $table_name WHERE status = 'approved' ORDER BY created_at DESC", ARRAY_A);
     
     if ($wpdb->last_error) {
         wp_send_json_error('Veritabanı hatası: ' . $wpdb->last_error);
@@ -417,7 +453,8 @@ class AmateurTelsizIlanVitrini {
         'seller_name' => sanitize_text_field($data['seller_name']),
         'location' => sanitize_text_field($data['location']),
         'seller_email' => sanitize_email($data['seller_email']),
-        'seller_phone' => sanitize_text_field($data['seller_phone'])
+        'seller_phone' => sanitize_text_field($data['seller_phone']),
+        'status' => 'pending'
     );
     
     $result = $wpdb->insert($table_name, $insert_data);
@@ -541,7 +578,7 @@ class AmateurTelsizIlanVitrini {
     $user_id = get_current_user_id();
     
     // İlanın kullanıcıya ait olup olmadığını kontrol et
-    $existing_listing = $wpdb->get_row($wpdb->prepare("SELECT user_id, images, featured_image_index, emoji FROM $table_name WHERE id = %d", $id), ARRAY_A);
+    $existing_listing = $wpdb->get_row($wpdb->prepare("SELECT user_id, images, featured_image_index, emoji, status FROM $table_name WHERE id = %d", $id), ARRAY_A);
     
     if (!$existing_listing) {
         wp_send_json_error('İlan bulunamadı');
@@ -661,6 +698,12 @@ class AmateurTelsizIlanVitrini {
     // Emoji sadece açıkça gönderildiyse güncellensin; aksi halde dokunma
     if (array_key_exists('emoji', $data)) {
         $update_data['emoji'] = sanitize_text_field($data['emoji']);
+    }
+    
+    // Red edilen ilanı düzenleniyorsa status'u pending'e ayarla ve rejection_reason'u temizle
+    if (!empty($existing_listing['status']) && $existing_listing['status'] === 'rejected') {
+        $update_data['status'] = 'pending';
+        $update_data['rejection_reason'] = null;
     }
 
     // Değişecek veri yoksa başarı döndür (no-op)
@@ -797,6 +840,7 @@ class AmateurTelsizIlanVitrini {
         // Arama ve filtreler
         $search = isset($_GET['s']) ? sanitize_text_field($_GET['s']) : '';
         $category_filter = isset($_GET['category']) ? sanitize_text_field($_GET['category']) : '';
+        $status_filter = isset($_GET['status']) ? sanitize_text_field($_GET['status']) : '';
         
         // WHERE şartlarını oluştur
         $where_clauses = array();
@@ -812,6 +856,11 @@ class AmateurTelsizIlanVitrini {
         if ($category_filter) {
             $where_clauses[] = "category = %s";
             $where_params[] = $category_filter;
+        }
+        
+        if ($status_filter) {
+            $where_clauses[] = "status = %s";
+            $where_params[] = $status_filter;
         }
         
         // WHERE cümlesini ve parametreleri hazırla
@@ -848,6 +897,13 @@ class AmateurTelsizIlanVitrini {
         $category_map = array();
         foreach ($category_counts as $cc) {
             $category_map[$cc['category']] = $cc['count'];
+        }
+        
+        // Status istatistikleri
+        $status_counts = $wpdb->get_results("SELECT status, COUNT(*) as count FROM $table_name GROUP BY status", ARRAY_A);
+        $status_map = array('pending' => 0, 'approved' => 0, 'rejected' => 0);
+        foreach ($status_counts as $sc) {
+            $status_map[$sc['status']] = $sc['count'];
         }
         
         // İlanları getir
@@ -1057,6 +1113,19 @@ class AmateurTelsizIlanVitrini {
             .ativ-category-accessory { background: #fff3e0; color: #e65100; }
             .ativ-category-other { background: #f5f5f5; color: #666; }
             
+            .ativ-status-badge {
+                display: inline-block;
+                padding: 4px 10px;
+                border-radius: 20px;
+                font-size: 11px;
+                font-weight: 600;
+                text-transform: uppercase;
+            }
+            
+            .ativ-status-pending { background: #fff3cd; color: #856404; }
+            .ativ-status-approved { background: #d4edda; color: #155724; }
+            .ativ-status-rejected { background: #f8d7da; color: #721c24; }
+            
             .ativ-status-new { background: #d4edda; color: #155724; padding: 4px 8px; border-radius: 4px; font-size: 11px; }
             .ativ-status-old { background: #fff3cd; color: #856404; padding: 4px 8px; border-radius: 4px; font-size: 11px; }
             
@@ -1175,6 +1244,22 @@ class AmateurTelsizIlanVitrini {
                 <?php endforeach; ?>
             </div>
             
+            <!-- İlan Durumu Özeti -->
+            <div class="ativ-stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); margin-bottom: 30px;">
+                <div class="ativ-stat-card" style="border-left-color: #ffc107; cursor: pointer;" onclick="document.querySelector('select[name=status]').value='pending'; document.querySelector('form').submit();">
+                    <div class="ativ-stat-label">⏳ Onay Bekleyen</div>
+                    <div class="ativ-stat-value"><?php echo $status_map['pending']; ?></div>
+                </div>
+                <div class="ativ-stat-card" style="border-left-color: #28a745; cursor: pointer;" onclick="document.querySelector('select[name=status]').value='approved'; document.querySelector('form').submit();">
+                    <div class="ativ-stat-label">✅ Onaylanmış</div>
+                    <div class="ativ-stat-value"><?php echo $status_map['approved']; ?></div>
+                </div>
+                <div class="ativ-stat-card" style="border-left-color: #dc3545; cursor: pointer;" onclick="document.querySelector('select[name=status]').value='rejected'; document.querySelector('form').submit();">
+                    <div class="ativ-stat-label">❌ Reddedilmiş</div>
+                    <div class="ativ-stat-value"><?php echo $status_map['rejected']; ?></div>
+                </div>
+            </div>
+            
             <!-- Arama ve Filtreler -->
             <div class="ativ-filters">
                 <form method="get" action="" style="display: flex; gap: 15px; width: 100%; flex-wrap: wrap; align-items: flex-end;">
@@ -1197,6 +1282,16 @@ class AmateurTelsizIlanVitrini {
                         </select>
                     </div>
                     
+                    <div class="ativ-filter-group" style="min-width: 200px;">
+                        <label>📊 Durum</label>
+                        <select name="status">
+                            <option value="">Tümü</option>
+                            <option value="pending" <?php selected($status_filter, 'pending'); ?>>⏳ Onay Bekleyen</option>
+                            <option value="approved" <?php selected($status_filter, 'approved'); ?>>✅ Onaylanmış</option>
+                            <option value="rejected" <?php selected($status_filter, 'rejected'); ?>>❌ Reddedilmiş</option>
+                        </select>
+                    </div>
+                    
                     <div class="ativ-filter-buttons">
                         <input type="submit" class="ativ-btn ativ-btn-edit" value="🔎 Filtrele">
                         <a href="?page=ativ-listings" class="ativ-btn ativ-btn-edit" style="text-decoration: none; text-align: center;">↺ Temizle</a>
@@ -1211,12 +1306,13 @@ class AmateurTelsizIlanVitrini {
                         <thead>
                             <tr>
                                 <th style="width: 5%;">ID</th>
-                                <th style="width: 30%;">İlan Bilgisi</th>
-                                <th style="width: 12%;">Kategori</th>
-                                <th style="width: 12%;">Satıcı</th>
-                                <th style="width: 12%;">Fiyat</th>
-                                <th style="width: 15%;">Tarih</th>
-                                <th style="width: 14%;">İşlemler</th>
+                                <th style="width: 25%;">İlan Bilgisi</th>
+                                <th style="width: 10%;">Kategori</th>
+                                <th style="width: 10%;">Durum</th>
+                                <th style="width: 10%;">Satıcı</th>
+                                <th style="width: 10%;">Fiyat</th>
+                                <th style="width: 12%;">Tarih</th>
+                                <th style="width: 18%;">İşlemler</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -1256,6 +1352,23 @@ class AmateurTelsizIlanVitrini {
                                     </td>
                                     <td><span class="ativ-category-badge <?php echo $category_class; ?>"><?php echo esc_html($this->get_category_name($listing['category'])); ?></span></td>
                                     <td>
+                                        <?php
+                                            $status_label = '';
+                                            $status_class = '';
+                                            if ($listing['status'] === 'pending') {
+                                                $status_label = '⏳ Onay Bekliyor';
+                                                $status_class = 'ativ-status-pending';
+                                            } elseif ($listing['status'] === 'approved') {
+                                                $status_label = '✅ Onaylandı';
+                                                $status_class = 'ativ-status-approved';
+                                            } elseif ($listing['status'] === 'rejected') {
+                                                $status_label = '❌ Reddedildi';
+                                                $status_class = 'ativ-status-rejected';
+                                            }
+                                        ?>
+                                        <span class="ativ-status-badge <?php echo $status_class; ?>"><?php echo $status_label; ?></span>
+                                    </td>
+                                    <td>
                                         <strong><?php echo esc_html($user_name); ?></strong>
                                         <div style="font-size: 11px; color: #999; margin-top: 3px;"><?php echo esc_html($listing['callsign']); ?></div>
                                     </td>
@@ -1268,9 +1381,13 @@ class AmateurTelsizIlanVitrini {
                                         <div style="font-size: 11px; color: #999;"><?php echo esc_html(date('H:i', strtotime($listing['created_at']))); ?></div>
                                     </td>
                                     <td>
-                                        <div class="ativ-actions">
-                                            <button class="ativ-btn ativ-btn-edit" onclick="openAdminEditModal(<?php echo $listing['id']; ?>)">✏️ Düzenle</button>
-                                            <a class="ativ-btn ativ-btn-delete" href="<?php echo wp_nonce_url(admin_url('admin.php?page=ativ-listings&action=delete&id=' . $listing['id']), 'ativ_delete_' . $listing['id']); ?>" onclick="return confirm('Bu ilanı silmek istediğinizden emin misiniz?')">🗑️ Sil</a>
+                                        <div class="ativ-actions" style="flex-direction: column; gap: 5px;">
+                                            <?php if ($listing['status'] === 'pending') : ?>
+                                                <button class="ativ-btn" style="background: #28a745; color: white; font-size: 11px; padding: 4px 8px;" onclick="changeListingStatus(<?php echo $listing['id']; ?>, 'approved')">✅ Onayla</button>
+                                                <button class="ativ-btn" style="background: #dc3545; color: white; font-size: 11px; padding: 4px 8px;" onclick="openRejectModal(<?php echo $listing['id']; ?>)">❌ Reddet</button>
+                                            <?php endif; ?>
+                                            <button class="ativ-btn ativ-btn-edit" style="font-size: 11px; padding: 4px 8px;" onclick="openAdminEditModal(<?php echo $listing['id']; ?>)">✏️ Düzenle</button>
+                                            <a class="ativ-btn ativ-btn-delete" style="font-size: 11px; padding: 4px 8px; text-align: center; text-decoration: none;" href="<?php echo wp_nonce_url(admin_url('admin.php?page=ativ-listings&action=delete&id=' . $listing['id']), 'ativ_delete_' . $listing['id']); ?>" onclick="return confirm('Bu ilanı silmek istediğinizden emin misiniz?')">🗑️ Sil</a>
                                         </div>
                                     </td>
                                 </tr>
@@ -1291,10 +1408,11 @@ class AmateurTelsizIlanVitrini {
                     <?php 
                     $search_param = $search ? '&s=' . urlencode($search) : '';
                     $category_param = $category_filter ? '&category=' . urlencode($category_filter) : '';
+                    $status_param = $status_filter ? '&status=' . urlencode($status_filter) : '';
                     
                     // Önceki
                     if ($current_page > 1) {
-                        echo '<a href="' . esc_url(admin_url('admin.php?page=ativ-listings&paged=' . ($current_page - 1) . $search_param . $category_param)) . '">← Önceki</a>';
+                        echo '<a href="' . esc_url(admin_url('admin.php?page=ativ-listings&paged=' . ($current_page - 1) . $search_param . $category_param . $status_param)) . '">← Önceki</a>';
                     }
                     
                     // Sayfalar
@@ -1302,13 +1420,13 @@ class AmateurTelsizIlanVitrini {
                         if ($i === $current_page) {
                             echo '<span class="current">' . $i . '</span>';
                         } else {
-                            echo '<a href="' . esc_url(admin_url('admin.php?page=ativ-listings&paged=' . $i . $search_param . $category_param)) . '">' . $i . '</a>';
+                            echo '<a href="' . esc_url(admin_url('admin.php?page=ativ-listings&paged=' . $i . $search_param . $category_param . $status_param)) . '">' . $i . '</a>';
                         }
                     }
                     
                     // Sonraki
                     if ($current_page < $total_pages) {
-                        echo '<a href="' . esc_url(admin_url('admin.php?page=ativ-listings&paged=' . ($current_page + 1) . $search_param . $category_param)) . '">Sonraki →</a>';
+                        echo '<a href="' . esc_url(admin_url('admin.php?page=ativ-listings&paged=' . ($current_page + 1) . $search_param . $category_param . $status_param)) . '">Sonraki →</a>';
                     }
                     ?>
                 </div>
@@ -1537,6 +1655,29 @@ class AmateurTelsizIlanVitrini {
             </div>
         </div>
         
+        <!-- Red Nedeni Modal -->
+        <div id="rejectModal" class="admin-edit-modal">
+            <div class="admin-edit-modal-content" style="max-width: 500px;">
+                <div class="admin-edit-modal-header">
+                    <h2>❌ İlan Reddet</h2>
+                    <button class="admin-edit-modal-close" onclick="closeRejectModal()">×</button>
+                </div>
+                <form id="rejectForm" onsubmit="submitRejectForm(event)">
+                    <input type="hidden" id="rejectListingId" name="id">
+                    
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; font-weight: 600; margin-bottom: 8px; color: #333;">Red Nedeni</label>
+                        <textarea id="rejectionReason" name="rejection_reason" placeholder="Lütfen bu ilanı neden reddettiğinizi açıklayın..." rows="6" required style="width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; font-family: inherit; transition: all 0.2s ease;" onblur="this.style.borderColor='#ddd'" onfocus="this.style.borderColor='#0073aa'; this.style.boxShadow='0 0 0 4px rgba(0, 115, 170, 0.1)'"></textarea>
+                    </div>
+                    
+                    <div class="ativ-form-buttons" style="display: flex; gap: 10px; margin-top: 20px; padding-top: 20px; border-top: 2px solid #f0f0f0;">
+                        <button type="submit" style="flex: 1; padding: 12px 20px; background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;" title="İlanı reddet ve nedeni kaydet">❌ Reddet</button>
+                        <button type="button" onclick="closeRejectModal()" style="flex: 1; padding: 12px 20px; background: #f0f0f0; color: #333; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">İptal</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
         <script>
         function openAdminEditModal(id) {
             const modal = document.getElementById('adminEditModal');
@@ -1638,6 +1779,55 @@ class AmateurTelsizIlanVitrini {
             document.body.style.overflow = 'auto';
         }
         
+        function openRejectModal(id) {
+            const modal = document.getElementById('rejectModal');
+            document.getElementById('rejectListingId').value = id;
+            document.getElementById('rejectionReason').value = '';
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closeRejectModal() {
+            const modal = document.getElementById('rejectModal');
+            modal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+        
+        function submitRejectForm(e) {
+            e.preventDefault();
+            
+            const id = document.getElementById('rejectListingId').value;
+            const reason = document.getElementById('rejectionReason').value;
+            
+            if (!reason.trim()) {
+                alert('❌ Lütfen red nedenini yazınız');
+                return;
+            }
+            
+            fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
+                method: 'POST',
+                body: new URLSearchParams({
+                    action: 'ativ_ajax',
+                    action_type: 'ativ_change_listing_status',
+                    id: id,
+                    status: 'rejected',
+                    rejection_reason: reason
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    closeRejectModal();
+                    location.reload();
+                } else {
+                    alert('❌ Hata: ' + (data.data || 'Bilinmeyen hata'));
+                }
+            })
+            .catch(error => {
+                alert('❌ Hata: ' + error);
+            });
+        }
+        
         function removeImageFromForm(btn) {
             btn.closest('.admin-image-item').style.animation = 'fadeOut 0.3s ease forwards';
             setTimeout(() => {
@@ -1649,6 +1839,34 @@ class AmateurTelsizIlanVitrini {
         function updateImageCount() {
             const count = document.querySelectorAll('#adminImageGallery .admin-image-item').length;
             document.getElementById('imageCount').textContent = count;
+        }
+        
+        function changeListingStatus(id, status) {
+            let statusLabel = status === 'approved' ? 'onaylamak' : 'reddetmek';
+            if (!confirm('Bu ilanı ' + statusLabel + ' istediğinizden emin misiniz?')) {
+                return;
+            }
+            
+            fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
+                method: 'POST',
+                body: new URLSearchParams({
+                    action: 'ativ_ajax',
+                    action_type: 'ativ_change_listing_status',
+                    id: id,
+                    status: status
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('❌ Hata: ' + (data.data || 'Bilinmeyen hata'));
+                }
+            })
+            .catch(error => {
+                alert('❌ Hata: ' + error);
+            });
         }
         
         // Modal dışına tıklandığında kapat

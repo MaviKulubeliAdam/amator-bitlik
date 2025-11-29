@@ -30,6 +30,7 @@ let currentPage = 1; // Sayfa numarası (1'den başlar)
 let totalPages = 1; // Toplam sayfa sayısı
 let selectedListing = null;
 let editingListing = null;
+let isEditingRejectedListing = false; // Red edilen ilan düzenleniyorsa
 let userCallsign = localStorage.getItem('userCallsign') || null;
 
 let uploadedImages = [];

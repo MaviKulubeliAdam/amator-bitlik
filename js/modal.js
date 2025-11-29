@@ -190,6 +190,9 @@ function closeAddListingModal() {
   uploadedImages = [];
   featuredImageIndex = 0;
   editingListing = null;
+  isEditingRejectedListing = false;
+  document.querySelector('.modal-header h2').textContent = 'Yeni İlan Ekle';
+  document.getElementById('formSubmitBtn').textContent = 'İlanı Yayınla';
   renderImagePreviews();
 }
 
@@ -337,7 +340,11 @@ async function handleFormSubmit(e) {
   try {
     if (isEditing) {
       await updateListing(editingListing.id, listingData);
-      messageDiv.innerHTML = '<div class="success-message">İlan başarıyla güncellendi!</div>';
+      if (isEditingRejectedListing) {
+        messageDiv.innerHTML = '<div class="success-message">İlan başarıyla güncellendi ve tekrar onaya gönderildi!</div>';
+      } else {
+        messageDiv.innerHTML = '<div class="success-message">İlan başarıyla güncellendi!</div>';
+      }
     } else {
       await saveListing(listingData);
       messageDiv.innerHTML = '<div class="success-message">İlanınız başarıyla eklendi!</div>';
@@ -360,12 +367,16 @@ async function handleFormSubmit(e) {
     // Basariyi göster ve modal kapat
     setTimeout(() => {
       closeAddListingModal();
+      isEditingRejectedListing = false; // Flag'i temizle
     }, 1500);
   } catch (error) {
     messageDiv.innerHTML = '<div class="error-message">İşlem sırasında bir hata oluştu. Lütfen tekrar deneyin.</div>';
   } finally {
     submitBtn.disabled = false;
-    submitBtn.textContent = isEditing ? 'Değişiklikleri Kaydet' : 'İlanı Yayınla';
+    const submitBtnText = isEditing ? 
+      (isEditingRejectedListing ? 'Güncelle ve Tekrar Onaya Gönder' : 'Değişiklikleri Kaydet') : 
+      'İlanı Yayınla';
+    submitBtn.textContent = submitBtnText;
   }
 }
 
@@ -1097,7 +1108,7 @@ async function refreshMyListingsGrid() {
     const data = new FormData();
     data.append('action', 'ativ_ajax');
     data.append('action_type', 'get_user_listings');
-    data.append('nonce', ativ_ajax.public_nonce);
+    data.append('nonce', ativ_ajax.nonce);
 
     const response = await fetch(ativ_ajax.url, {
       method: 'POST',
@@ -1248,4 +1259,75 @@ window.initSlider = initSlider;
 window.openDetailPanel = openDetailPanel;
 window.closeDetailPanel = closeDetailPanel;
 window.handleMyListingDelete = handleMyListingDelete;
+
+// My-listings sayfası için red edilen ilanı düzenle
+window.editMyListing = async function(id) {
+  try {
+    const response = await fetch(ativ_ajax.url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: 'action=ativ_ajax&action_type=get_user_listings&nonce=' + ativ_ajax.nonce
+    });
+    
+    const data = await response.json();
+    console.log('[DEBUG editMyListing] Response:', data);
+    
+    if (data.success && Array.isArray(data.data)) {
+      const listing = data.data.find(l => Number(l.id) === Number(id));
+      console.log('[DEBUG editMyListing] Found listing:', listing);
+      
+      if (listing) {
+        // Görselleri formatla
+        if (listing.images) {
+          listing.images = listing.images.map(img => ({
+            data: img.data || img.name,
+            name: img.name
+          }));
+        }
+        
+        // Düzenleme modu ve red flag'ini ayarla
+        editingListing = Object.assign({}, listing);
+        isEditingRejectedListing = true;
+        
+        // Form alanlarını doldur
+        document.getElementById('formTitle').value = listing.title || '';
+        document.getElementById('formCategory').value = listing.category || '';
+        document.getElementById('formBrand').value = listing.brand || '';
+        document.getElementById('formModel').value = listing.model || '';
+        document.getElementById('formCondition').value = listing.condition || '';
+        document.getElementById('formPrice').value = listing.price || '';
+        document.getElementById('formCurrency').value = listing.currency || 'TRY';
+        document.getElementById('formDescription').value = listing.description || '';
+        document.getElementById('formCallsign').value = listing.callsign || '';
+        document.getElementById('formSellerName').value = listing.seller_name || '';
+        document.getElementById('formLocation').value = listing.location || '';
+        document.getElementById('formEmail').value = listing.seller_email || '';
+        document.getElementById('formPhone').value = listing.seller_phone || '';
+        
+        // Modal başlığı ve submit butonunu özelleştir
+        document.querySelector('.modal-header h2').textContent = 'Red Edilen İlanı Düzenle';
+        document.getElementById('formSubmitBtn').textContent = 'Güncelle ve Tekrar Onaya Gönder';
+        
+        // Görselleri yükle
+        uploadedImages = listing.images || [];
+        featuredImageIndex = Math.max(0, parseInt(listing.featured_image_index || 0));
+        renderImagePreviews();
+        updatePreview();
+        
+        // Modal aç
+        document.getElementById('addListingModal').style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+        return;
+      }
+    } else {
+      console.error('[DEBUG editMyListing] API Error:', data.data);
+    }
+    alert('İlan yüklenemedi');
+  } catch (e) {
+    console.error('[DEBUG editMyListing] Exception:', e);
+    alert('İlan yüklenirken hata oluştu');
+  }
+};
 window.refreshMyListingsGrid = refreshMyListingsGrid;
