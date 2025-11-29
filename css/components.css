@@ -230,7 +230,7 @@
     .detail-right-section {
       padding: 40px;
       overflow-y: auto;
-      max-height: 85vh;
+      max-height: 90vh;
     }
 
     .detail-header {
@@ -359,8 +359,8 @@
   border-radius: 20px !important;
   max-width: 1200px !important;
   width: 100% !important;
-  max-height: 90% !important;
-  overflow-y: auto !important;
+  max-height: 90vh !important;
+  overflow: hidden !important;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3) !important;
   animation: slideUp 0.3s ease !important;
   display: grid !important;
@@ -453,7 +453,7 @@
 .detail-right-section {
   padding: 40px !important;
   overflow-y: auto !important;
-  max-height: 85vh !important;
+  max-height: 90vh !important;
 }
 
 .detail-header {
@@ -1654,7 +1654,7 @@
     .detail-right-section {
       padding: 40px;
       overflow-y: auto;
-      max-height: 85vh;
+      max-height: 90vh;
     }
 
     .detail-header {
