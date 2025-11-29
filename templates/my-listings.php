@@ -5,7 +5,58 @@
     <p>Kendi yayınladığınız ilanların listesi</p>
   </header>
 
-  <div class="controls" style="margin-bottom:20px;">
+  <div class="controls">
+    <!-- Filtreleri sola al -->
+    <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center; flex: 1;">
+      
+      <!-- Fiyata göre sıralama -->
+      <div class="dropdown-filter" id="priceSortDropdown">
+        <button type="button" class="filter-select dropdown-button" id="priceSortButton" aria-label="Fiyat filtresi">
+          <span id="priceSortButtonText">💰 Fiyat</span>
+          <span class="dropdown-arrow">▼</span>
+        </button>
+        <div class="dropdown-menu" id="priceSortMenu">
+          <div class="dropdown-options" id="priceSortOptions">
+            <div class="dropdown-option selected" data-value="">💰 Fiyat</div>
+            <div class="dropdown-option" data-value="price-asc">Fiyat: Düşükten Yükseğe</div>
+            <div class="dropdown-option" data-value="price-desc">Fiyat: Yüksekten Düşüğe</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Onay durumuna göre filtreleme -->
+      <div class="dropdown-filter" id="statusFilterDropdown">
+        <button type="button" class="filter-select dropdown-button" id="statusFilterButton" aria-label="Durum filtresi">
+          <span id="statusFilterButtonText">📋 Tüm Durumlar</span>
+          <span class="dropdown-arrow">▼</span>
+        </button>
+        <div class="dropdown-menu" id="statusFilterMenu">
+          <div class="dropdown-options" id="statusFilterOptions">
+            <div class="dropdown-option selected" data-value="">📋 Tüm Durumlar</div>
+            <div class="dropdown-option" data-value="approved">✅ Onaylı</div>
+            <div class="dropdown-option" data-value="pending">⏳ Onay Bekleyen</div>
+            <div class="dropdown-option" data-value="rejected">❌ Reddedilen</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Tarihe göre sıralama -->
+      <div class="dropdown-filter" id="dateSortDropdown">
+        <button type="button" class="filter-select dropdown-button" id="dateSortButton" aria-label="Tarih filtresi">
+          <span id="dateSortButtonText">📅 Tarih</span>
+          <span class="dropdown-arrow">▼</span>
+        </button>
+        <div class="dropdown-menu" id="dateSortMenu">
+          <div class="dropdown-options" id="dateSortOptions">
+            <div class="dropdown-option selected" data-value="">📅 Tarih</div>
+            <div class="dropdown-option" data-value="newest">Yeniden Eskiye</div>
+            <div class="dropdown-option" data-value="oldest">Eskiden Yeniye</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Yeni İlan butonu sağda -->
     <?php if (is_user_logged_in()): ?>
       <button id="addListingBtn" class="add-listing-btn">+ Yeni İlan</button>
     <?php endif; ?>
@@ -31,24 +82,7 @@
             }
           ?>
           <div class="listing-row-wrapper">
-            <!-- Red Uyarısı -->
-            <?php if ($listing['status'] === 'rejected'): ?>
-            <div style="background: #f8d7da; border-left: 4px solid #dc3545; padding: 15px; margin-bottom: 10px; border-radius: 4px;">
-              <div style="flex: 1;">
-                <div style="color: #721c24; margin-bottom: 8px;"><strong>❌ İlan Reddedildi</strong></div>
-                <div style="color: #721c24; font-size: 14px;">
-                  <strong>Red Nedeni:</strong><br>
-                  <?php echo nl2br(esc_html($listing['rejection_reason'] ?? 'Neden belirtilmemiş')); ?>
-                </div>
-              </div>
-            </div>
-            <?php elseif ($listing['status'] === 'pending'): ?>
-            <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin-bottom: 10px; border-radius: 4px;">
-              <div style="color: #856404;"><strong>⏳ Onay Bekliyor</strong> - İlanınız yönetici tarafından incelenmektedir.</div>
-            </div>
-            <?php endif; ?>
-            
-            <div class="listing-row" data-listing-id="<?php echo esc_attr($listing['id']); ?>">
+            <div class="listing-row" data-listing-id="<?php echo esc_attr($listing['id']); ?>" style="position: relative; border: 2px solid <?php echo ($listing['status'] === 'rejected' ? '#dc3545' : ($listing['status'] === 'pending' ? '#ffc107' : 'transparent')); ?>; border-radius: 4px; display: flex; flex-wrap: wrap;">
               <div class="listing-row-image">
                 <?php if ($image_url): ?>
                   <img src="<?php echo esc_url($image_url); ?>" alt="<?php echo esc_attr($listing['title']); ?>">
@@ -56,8 +90,39 @@
                   <div class="listing-row-image-fallback"><?php echo esc_html($listing['emoji'] ?? '📻'); ?></div>
                 <?php endif; ?>
               </div>
-              <div class="listing-row-info">
-                <h3 class="listing-row-title" style="cursor: pointer;" onclick="toggleListingDetails(this)"><?php echo esc_html($listing['title']); ?></h3>
+              <div class="listing-row-info" style="flex: 1; min-width: 0; overflow-wrap: break-word; word-wrap: break-word;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
+                  <h3 class="listing-row-title" style="cursor: pointer; margin: 0;" onclick="toggleListingDetails(this)"><?php echo esc_html($listing['title']); ?></h3>
+                  <?php if ($listing['status'] === 'rejected'): ?>
+                    <span style="background: #dc3545; color: white; font-size: 11px; padding: 4px 8px; border-radius: 12px; white-space: nowrap; font-weight: bold;">❌ Reddedildi</span>
+                  <?php elseif ($listing['status'] === 'pending'): ?>
+                    <span style="background: #ffc107; color: #333; font-size: 11px; padding: 4px 8px; border-radius: 12px; white-space: nowrap; font-weight: bold;">⏳ Beklemede</span>
+                  <?php else: ?>
+                    <span style="background: #28a745; color: white; font-size: 11px; padding: 4px 8px; border-radius: 12px; white-space: nowrap; font-weight: bold;">✅ Onaylı</span>
+                  <?php endif; ?>
+                </div>
+                
+                <!-- Red nedeni veya pending uyarısı -->
+                <?php if ($listing['status'] === 'rejected'): ?>
+                <div style="background: #ffebee; border-left: 3px solid #dc3545; padding: 10px; margin-bottom: 8px; border-radius: 2px; word-wrap: break-word; overflow-wrap: break-word;">
+                  <div style="color: #721c24; font-size: 12px; font-weight: bold; margin-bottom: 5px;">Red Nedeni:</div>
+                  <div style="color: #721c24; font-size: 12px; margin-bottom: 8px; word-wrap: break-word; overflow-wrap: break-word; white-space: pre-wrap;">
+                    <?php echo nl2br(esc_html($listing['rejection_reason'] ?? 'Neden belirtilmemiş')); ?>
+                  </div>
+                  <div style="background: #fff3cd; border-left: 2px solid #ff9800; padding: 8px; border-radius: 2px; margin-top: 8px; word-wrap: break-word; overflow-wrap: break-word;">
+                    <div style="color: #856404; font-size: 12px;">
+                      💡 <strong>İlanınızı düzenleyip tekrar gönderin.</strong> "Düzenle" butonuna tıklayarak değişiklikler yapabilirsiniz.
+                    </div>
+                  </div>
+                </div>
+                <?php elseif ($listing['status'] === 'pending'): ?>
+                <div style="background: #fffbf0; border-left: 3px solid #ffc107; padding: 8px 10px; margin-bottom: 8px; border-radius: 2px; word-wrap: break-word; overflow-wrap: break-word;">
+                  <div style="color: #856404; font-size: 12px;">
+                    ⏳ <strong>Yönetici incelemesinde...</strong> İlanınızı düzenleyebilirsiniz.
+                  </div>
+                </div>
+                <?php endif; ?>
+                
                 <p class="listing-row-category"><?php echo esc_html(getCategoryName($listing['category'])); ?> • <?php echo esc_html($listing['condition']); ?></p>
                 <p class="listing-row-details"><?php echo esc_html($listing['brand']); ?> <?php echo esc_html($listing['model']); ?> • <?php echo esc_html($listing['callsign']); ?></p>
                 <p class="listing-row-date">Yayınlanma: <?php echo esc_html(date_i18n('d.m.Y H:i', strtotime($listing['created_at']))); ?></p>

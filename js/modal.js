@@ -19,6 +19,96 @@ function setupModal() {
       if (e.target.id === 'addListingModal') closeAddListingModal();
     });
   }
+  
+  // My-listings sayfasındaki custom dropdown filtreleri ayarla
+  setupMyListingsDropdowns();
+}
+
+/**
+ * My-listings dropdown'ları ayarla
+ */
+function setupMyListingsDropdowns() {
+  // Fiyat dropdown
+  const priceSortButton = document.getElementById('priceSortButton');
+  const priceSortMenu = document.getElementById('priceSortMenu');
+  const priceSortOptions = document.querySelectorAll('#priceSortOptions .dropdown-option');
+  
+  // Durum dropdown
+  const statusFilterButton = document.getElementById('statusFilterButton');
+  const statusFilterMenu = document.getElementById('statusFilterMenu');
+  const statusFilterOptions = document.querySelectorAll('#statusFilterOptions .dropdown-option');
+  
+  // Tarih dropdown
+  const dateSortButton = document.getElementById('dateSortButton');
+  const dateSortMenu = document.getElementById('dateSortMenu');
+  const dateSortOptions = document.querySelectorAll('#dateSortOptions .dropdown-option');
+  
+  if (priceSortButton && priceSortMenu) {
+    priceSortButton.addEventListener('click', (e) => {
+      e.stopPropagation();
+      priceSortMenu.classList.toggle('active');
+      if (statusFilterMenu) statusFilterMenu.classList.remove('active');
+      if (dateSortMenu) dateSortMenu.classList.remove('active');
+    });
+    
+    priceSortOptions.forEach(option => {
+      option.addEventListener('click', () => {
+        const value = option.dataset.value;
+        document.getElementById('priceSortButtonText').textContent = option.textContent;
+        priceSortOptions.forEach(o => o.classList.remove('selected'));
+        option.classList.add('selected');
+        priceSortMenu.classList.remove('active');
+        applyMyListingsFilters();
+      });
+    });
+  }
+  
+  if (statusFilterButton && statusFilterMenu) {
+    statusFilterButton.addEventListener('click', (e) => {
+      e.stopPropagation();
+      statusFilterMenu.classList.toggle('active');
+      if (priceSortMenu) priceSortMenu.classList.remove('active');
+      if (dateSortMenu) dateSortMenu.classList.remove('active');
+    });
+    
+    statusFilterOptions.forEach(option => {
+      option.addEventListener('click', () => {
+        const value = option.dataset.value;
+        document.getElementById('statusFilterButtonText').textContent = option.textContent;
+        statusFilterOptions.forEach(o => o.classList.remove('selected'));
+        option.classList.add('selected');
+        statusFilterMenu.classList.remove('active');
+        applyMyListingsFilters();
+      });
+    });
+  }
+  
+  if (dateSortButton && dateSortMenu) {
+    dateSortButton.addEventListener('click', (e) => {
+      e.stopPropagation();
+      dateSortMenu.classList.toggle('active');
+      if (priceSortMenu) priceSortMenu.classList.remove('active');
+      if (statusFilterMenu) statusFilterMenu.classList.remove('active');
+    });
+    
+    dateSortOptions.forEach(option => {
+      option.addEventListener('click', () => {
+        const value = option.dataset.value;
+        document.getElementById('dateSortButtonText').textContent = option.textContent;
+        dateSortOptions.forEach(o => o.classList.remove('selected'));
+        option.classList.add('selected');
+        dateSortMenu.classList.remove('active');
+        applyMyListingsFilters();
+      });
+    });
+  }
+  
+  // Dropdown dışına tıklanırsa kapat
+  document.addEventListener('click', () => {
+    if (priceSortMenu) priceSortMenu.classList.remove('active');
+    if (statusFilterMenu) statusFilterMenu.classList.remove('active');
+    if (dateSortMenu) dateSortMenu.classList.remove('active');
+  });
 }
 
 /**
@@ -1091,6 +1181,166 @@ async function handleMyListingDelete(id) {
   }
 }
 
+// My-listings filtreleri için genel depolama
+let myListingsCache = [];
+
+/**
+ * My-listings filtreleri uygulanır
+ */
+async function applyMyListingsFilters() {
+  // Eğer cache boşsa, önce refresh et
+  if (myListingsCache.length === 0) {
+    await refreshMyListingsGrid();
+    return;
+  }
+  
+  let filtered = [...myListingsCache];
+  
+  // Durum filtrelemesi - dropdown'dan al
+  const statusOption = document.querySelector('#statusFilterOptions .dropdown-option.selected');
+  const statusFilter = statusOption?.dataset?.value || '';
+  if (statusFilter) {
+    filtered = filtered.filter(l => l.status === statusFilter);
+  }
+  
+  // Fiyat sıralaması - dropdown'dan al
+  const priceOption = document.querySelector('#priceSortOptions .dropdown-option.selected');
+  const priceSort = priceOption?.dataset?.value || '';
+  if (priceSort === 'price-asc') {
+    filtered.sort((a, b) => parseFloat(a.price || 0) - parseFloat(b.price || 0));
+  } else if (priceSort === 'price-desc') {
+    filtered.sort((a, b) => parseFloat(b.price || 0) - parseFloat(a.price || 0));
+  }
+  
+  // Tarih sıralaması - dropdown'dan al
+  const dateOption = document.querySelector('#dateSortOptions .dropdown-option.selected');
+  const dateSort = dateOption?.dataset?.value || '';
+  if (dateSort === 'newest') {
+    filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  } else if (dateSort === 'oldest') {
+    filtered.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+  }
+  
+  // HTML oluştur ve göster
+  renderMyListingsGrid(filtered);
+}
+
+/**
+ * My-listings grid'i render et
+ */
+function renderMyListingsGrid(listings) {
+  const grid = document.getElementById('myListingsGrid');
+  if (!grid) return;
+  
+  if (listings.length === 0) {
+    grid.innerHTML = '<div class="no-results">Seçtiğiniz kriterlere uygun ilan bulunamadı.</div>';
+  } else {
+    grid.innerHTML = listings.map(listing => {
+      const imageUrl = getListingImageUrl(listing);
+      const statusBadge = listing.status === 'rejected' ? '❌ Reddedildi' : 
+                          listing.status === 'pending' ? '⏳ Beklemede' : 
+                          '✅ Onaylı';
+      const statusColor = listing.status === 'rejected' ? '#dc3545' : 
+                         listing.status === 'pending' ? '#ffc107' : 
+                         '#28a745';
+      
+      return `
+        <div class="listing-row-wrapper">
+          <div class="listing-row" data-listing-id="${listing.id}" style="position: relative; border: 2px solid ${listing.status === 'rejected' ? '#dc3545' : (listing.status === 'pending' ? '#ffc107' : 'transparent')}; border-radius: 4px; display: flex; flex-wrap: wrap;">
+            <div class="listing-row-image">
+              ${imageUrl ? `<img src="${imageUrl}" alt="${escapeHtml(listing.title)}">` : `<div class="listing-row-image-fallback">${listing.emoji || '📻'}</div>`}
+            </div>
+            <div class="listing-row-info" style="flex: 1; min-width: 0; overflow-wrap: break-word; word-wrap: break-word;">
+              <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
+                <h3 class="listing-row-title" style="cursor: pointer; margin: 0;" onclick="toggleListingDetails(this)">${escapeHtml(listing.title)}</h3>
+                <span style="background: ${statusColor}; color: white; font-size: 11px; padding: 4px 8px; border-radius: 12px; white-space: nowrap; font-weight: bold;">${statusBadge}</span>
+              </div>
+              
+              ${listing.status === 'rejected' ? `
+                <div style="background: #ffebee; border-left: 3px solid #dc3545; padding: 10px; margin-bottom: 8px; border-radius: 2px; word-wrap: break-word; overflow-wrap: break-word;">
+                  <div style="color: #721c24; font-size: 12px; font-weight: bold; margin-bottom: 5px;">Red Nedeni:</div>
+                  <div style="color: #721c24; font-size: 12px; margin-bottom: 8px; word-wrap: break-word; overflow-wrap: break-word; white-space: pre-wrap;">
+                    ${(listing.rejection_reason || 'Neden belirtilmemiş').replace(/\n/g, '<br>')}
+                  </div>
+                  <div style="background: #fff3cd; border-left: 2px solid #ff9800; padding: 8px; border-radius: 2px; margin-top: 8px; word-wrap: break-word; overflow-wrap: break-word;">
+                    <div style="color: #856404; font-size: 12px;">
+                      💡 <strong>İlanınızı düzenleyip tekrar gönderin.</strong> Aşağıdaki "Düzenle" butonuna tıklayarak değişiklikler yapabilirsiniz.
+                    </div>
+                  </div>
+                </div>
+              ` : listing.status === 'pending' ? `
+                <div style="background: #fffbf0; border-left: 3px solid #ffc107; padding: 8px 10px; margin-bottom: 8px; border-radius: 2px; word-wrap: break-word; overflow-wrap: break-word;">
+                  <div style="color: #856404; font-size: 12px;">
+                    ⏳ <strong>Yönetici incelemesinde...</strong> İlanınızı düzenleyebilirsiniz.
+                  </div>
+                </div>
+              ` : ''}
+              
+              <p class="listing-row-category">${getCategoryName(listing.category)} • ${escapeHtml(listing.condition)}</p>
+              <p class="listing-row-details">${escapeHtml(listing.brand)} ${escapeHtml(listing.model)} • ${escapeHtml(listing.callsign)}</p>
+              <p class="listing-row-date">Yayınlanma: ${formatDate(listing.created_at)}</p>
+            </div>
+            <div class="listing-row-price">
+              <div class="price-amount">${listing.price} ${listing.currency || 'TRY'}</div>
+            </div>
+            <div class="listing-row-actions">
+              ${listing.status === 'rejected' || listing.status === 'pending' ? `
+                <button class="action-btn edit-btn" onclick="event.stopPropagation(); window.editMyListing(${listing.id})" title="Düzenle">✏️ Düzenle</button>
+              ` : `
+                <button class="action-btn edit-btn" onclick="event.stopPropagation(); window.editListing(${listing.id})" title="Düzenle">✏️ Düzenle</button>
+              `}
+              <button class="action-btn delete-btn" onclick="event.stopPropagation(); window.confirmDeleteListing(${listing.id})" title="Sil">🗑️ Sil</button>
+            </div>
+          </div>
+          <div class="listing-row-details-expanded">
+            <div class="listing-details-content">
+              <div class="details-section">
+                <h4>Ürün Açıklaması</h4>
+                <p>${(listing.description || '').replace(/\n/g, '<br>')}</p>
+              </div>
+              <div class="details-grid">
+                <div class="detail-item">
+                  <span class="detail-label">Kategori:</span>
+                  <span class="detail-value">${getCategoryName(listing.category)}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Durum:</span>
+                  <span class="detail-value">${escapeHtml(listing.condition)}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Marka:</span>
+                  <span class="detail-value">${escapeHtml(listing.brand)}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Model:</span>
+                  <span class="detail-value">${escapeHtml(listing.model)}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Fiyat:</span>
+                  <span class="detail-value">${listing.price} ${listing.currency || 'TRY'}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Konum:</span>
+                  <span class="detail-value">${escapeHtml(listing.location)}</span>
+                </div>
+              </div>
+              <div class="details-section">
+                <h4>Satıcı Bilgileri</h4>
+                <div class="seller-info">
+                  <p><strong>${escapeHtml(listing.seller_name)}</strong></p>
+                  <p>Çağrı İşareti: ${escapeHtml(listing.callsign)}</p>
+                  <p>E-posta: ${escapeHtml(listing.seller_email)}</p>
+                  <p>Telefon: ${escapeHtml(listing.seller_phone)}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+}
+
 /**
  * "Benim İlanlarım" sayfasını yenile
  */
@@ -1121,88 +1371,30 @@ async function refreshMyListingsGrid() {
 
     if (result.success && result.data) {
       const listings = result.data;
-      const grid = document.getElementById('myListingsGrid');
-      
-      if (grid) {
-        if (listings.length === 0) {
-          grid.innerHTML = '<div class="no-results">Henüz ilanınız yok.</div>';
-        } else {
-          grid.innerHTML = listings.map(listing => {
-            const imageUrl = getListingImageUrl(listing);
-            return `
-              <div class="listing-row-wrapper">
-                <div class="listing-row" data-listing-id="${listing.id}">
-                  <div class="listing-row-image">
-                    ${imageUrl ? `<img src="${imageUrl}" alt="${escapeHtml(listing.title)}">` : `<div class="listing-row-image-fallback">${listing.emoji || '📻'}</div>`}
-                  </div>
-                  <div class="listing-row-info">
-                    <h3 class="listing-row-title" style="cursor: pointer;" onclick="toggleListingDetails(this)">${escapeHtml(listing.title)}</h3>
-                    <p class="listing-row-category">${getCategoryName(listing.category)} • ${escapeHtml(listing.condition)}</p>
-                    <p class="listing-row-details">${escapeHtml(listing.brand)} ${escapeHtml(listing.model)} • ${escapeHtml(listing.callsign)}</p>
-                    <p class="listing-row-date">Yayınlanma: ${formatDate(listing.created_at)}</p>
-                  </div>
-                  <div class="listing-row-price">
-                    <div class="price-amount">${listing.price} ${listing.currency || 'TRY'}</div>
-                  </div>
-                  <div class="listing-row-actions">
-                    <button class="action-btn edit-btn" onclick="event.stopPropagation(); editListing(${listing.id})" title="Düzenle">✏️ Düzenle</button>
-                    <button class="action-btn delete-btn" onclick="event.stopPropagation(); handleMyListingDelete(${listing.id})" title="Sil">🗑️ Sil</button>
-                  </div>
-                </div>
-                <div class="listing-row-details-expanded">
-                  <div class="listing-details-content">
-                    <div class="details-section">
-                      <h4>Ürün Açıklaması</h4>
-                      <p>${(listing.description || '').replace(/\n/g, '<br>')}</p>
-                    </div>
-                    <div class="details-grid">
-                      <div class="detail-item">
-                        <span class="detail-label">Kategori:</span>
-                        <span class="detail-value">${getCategoryName(listing.category)}</span>
-                      </div>
-                      <div class="detail-item">
-                        <span class="detail-label">Durum:</span>
-                        <span class="detail-value">${escapeHtml(listing.condition)}</span>
-                      </div>
-                      <div class="detail-item">
-                        <span class="detail-label">Marka:</span>
-                        <span class="detail-value">${escapeHtml(listing.brand)}</span>
-                      </div>
-                      <div class="detail-item">
-                        <span class="detail-label">Model:</span>
-                        <span class="detail-value">${escapeHtml(listing.model)}</span>
-                      </div>
-                      <div class="detail-item">
-                        <span class="detail-label">Fiyat:</span>
-                        <span class="detail-value">${listing.price} ${listing.currency || 'TRY'}</span>
-                      </div>
-                      <div class="detail-item">
-                        <span class="detail-label">Konum:</span>
-                        <span class="detail-value">${escapeHtml(listing.location)}</span>
-                      </div>
-                    </div>
-                    <div class="details-section">
-                      <h4>Satıcı Bilgileri</h4>
-                      <div class="seller-info">
-                        <p><strong>${escapeHtml(listing.seller_name)}</strong></p>
-                        <p>Çağrı İşareti: ${escapeHtml(listing.callsign)}</p>
-                        <p>E-posta: ${escapeHtml(listing.seller_email)}</p>
-                        <p>Telefon: ${escapeHtml(listing.seller_phone)}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            `;
-          }).join('');
-        }
-      }
+      // Cache'e kaydet
+      myListingsCache = listings;
+      // Render et (filtreleme uygulanacak)
+      renderMyListingsGrid(listings);
     } else {
       console.error('İlanlar yenilenirken hata - success false:', result);
     }
   } catch (error) {
     console.error('İlanlar yenilenirken AJAX hatası:', error);
   }
+}
+
+/**
+ * Tarihi formatla
+ */
+function formatDate(dateString) {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('tr-TR', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
 }
 
 /**
@@ -1223,20 +1415,6 @@ function getListingImageUrl(listing) {
   }
   
   return '';
-}
-
-/**
- * Tarihi formatla
- */
-function formatDate(dateString) {
-  const date = new Date(dateString);
-  return date.toLocaleDateString('tr-TR', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
 }
 
 /**

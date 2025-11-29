@@ -247,6 +247,13 @@
       animation: dropdownSlide 0.3s ease;
     }
 
+    /* My-listings dropdown'ları için active class'ı */
+    .dropdown-menu.active {
+      display: flex !important;
+      flex-direction: column;
+      animation: dropdownSlide 0.3s ease;
+    }
+
     @keyframes dropdownSlide {
       from {
         opacity: 0;
