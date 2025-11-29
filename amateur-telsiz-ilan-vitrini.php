@@ -26,6 +26,9 @@ class AmateurTelsizIlanVitrini {
         // Kullanıcının kendi ilanlarını gösteren shortcode
         add_shortcode('amator_my_listings', array($this, 'display_my_listings'));
         register_activation_hook(__FILE__, array($this, 'activate'));
+        
+        // Admin menüsü
+        add_action('admin_menu', array($this, 'add_admin_menu'));
     }
     
     public function init() {
@@ -198,7 +201,36 @@ class AmateurTelsizIlanVitrini {
     }
     
    public function handle_ajax() {
-    $action = $_POST['action_type'] ?? '';
+    $action = $_POST['action_type'] ?? $_REQUEST['action'] ?? '';
+    
+    // Admin edit modal için AJAX
+    if ($action === 'ativ_get_listing_for_admin') {
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Yetkisiz erişim');
+        }
+        
+        $id = intval($_POST['id'] ?? 0);
+        $listing = $this->get_listing_by_id($id);
+        
+        if (!$listing) {
+            wp_send_json_error('İlan bulunamadı');
+        }
+        
+        // Form HTML'i oluştur
+        $form_html = $this->generate_admin_edit_form($listing);
+        wp_send_json_success($form_html);
+    }
+    
+    // Admin tarafından ilanı güncelle
+    if ($action === 'ativ_update_listing_admin') {
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Yetkisiz erişim');
+        }
+        
+        $id = intval($_POST['id'] ?? 0);
+        $this->update_listing_admin($id, $_POST);
+        wp_send_json_success('İlan güncellendi');
+    }
     
     // Kritik işlemler için oturum ve nonce kontrolü
     $critical_actions = ['save_listing', 'update_listing', 'delete_listing'];
@@ -715,9 +747,487 @@ class AmateurTelsizIlanVitrini {
         );
         return isset($categories[$category]) ? $categories[$category] : $category;
     }
+    
+    /**
+     * Admin menüsüne eklenti sayfasını ekler
+     */
+    public function add_admin_menu() {
+        add_menu_page(
+            'Amatör Bitlik - İlan Yönetimi',           // Sayfa başlığı
+            'Amatör Bitlik',                            // Menü başlığı
+            'manage_options',                           // Yetki
+            'ativ-listings',                            // Menu slug
+            array($this, 'admin_listings_page'),       // Callback
+            'dashicons-building',                       // Icon
+            25                                          // Position
+        );
+        
+        add_submenu_page(
+            'ativ-listings',                            // Parent menu slug
+            'Tüm İlanlar',                             // Sayfa başlığı
+            'Tüm İlanlar',                             // Menü başlığı
+            'manage_options',                          // Yetki
+            'ativ-listings',                           // Menu slug
+            array($this, 'admin_listings_page')        // Callback
+        );
+    }
+    
+    /**
+     * Admin İlan Yönetim Sayfası
+     */
+    public function admin_listings_page() {
+        // Silme işlemi
+        if (isset($_GET['action']) && $_GET['action'] === 'delete' && isset($_GET['id'])) {
+            $id = intval($_GET['id']);
+            if (wp_verify_nonce($_GET['_wpnonce'] ?? '', 'ativ_delete_' . $id)) {
+                $this->delete_listing_admin($id);
+                echo '<div class="notice notice-success"><p>İlan başarıyla silindi.</p></div>';
+            }
+        }
+        
+        // Tüm ilanları getir
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'amator_ilanlar';
+        
+        // Sayfalama
+        $per_page = 20;
+        $current_page = isset($_GET['paged']) ? intval($_GET['paged']) : 1;
+        $offset = ($current_page - 1) * $per_page;
+        
+        // Arama filtresi
+        $search = isset($_GET['s']) ? sanitize_text_field($_GET['s']) : '';
+        $where = '';
+        if ($search) {
+            $where = $wpdb->prepare(" WHERE title LIKE %s OR description LIKE %s", '%' . $search . '%', '%' . $search . '%');
+        }
+        
+        $total = $wpdb->get_var("SELECT COUNT(*) FROM $table_name" . $where);
+        $listings = $wpdb->get_results("SELECT * FROM $table_name" . $where . " ORDER BY created_at DESC LIMIT $per_page OFFSET $offset", ARRAY_A);
+        
+        $total_pages = ceil($total / $per_page);
+        
+        ?>
+        <div class="wrap">
+            <h1>Amatör Bitlik - İlan Yönetimi</h1>
+            
+            <form method="get" action="">
+                <input type="hidden" name="page" value="ativ-listings">
+                <p>
+                    <input type="search" name="s" value="<?php echo esc_attr($search); ?>" placeholder="İlan ara...">
+                    <input type="submit" class="button" value="Ara">
+                </p>
+            </form>
+            
+            <table class="widefat striped">
+                <thead>
+                    <tr>
+                        <th style="width: 5%;">ID</th>
+                        <th style="width: 25%;">Başlık</th>
+                        <th style="width: 15%;">Kategori</th>
+                        <th style="width: 15%;">Kullanıcı</th>
+                        <th style="width: 15%;">Fiyat</th>
+                        <th style="width: 20%;">Tarih</th>
+                        <th style="width: 5%;">İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if ($listings) : ?>
+                        <?php foreach ($listings as $listing) : 
+                            $user_info = get_userdata($listing['user_id']);
+                            $user_name = $user_info ? $user_info->display_name : 'Bilinmiyor';
+                        ?>
+                            <tr>
+                                <td><?php echo $listing['id']; ?></td>
+                                <td>
+                                    <strong><?php echo esc_html($listing['title']); ?></strong>
+                                    <br><small><?php echo esc_html(substr($listing['description'], 0, 50)) . '...'; ?></small>
+                                </td>
+                                <td><?php echo esc_html($this->get_category_name($listing['category'])); ?></td>
+                                <td><?php echo esc_html($user_name); ?></td>
+                                <td><?php echo number_format($listing['price'], 2); ?> <?php echo esc_html($listing['currency']); ?></td>
+                                <td><?php echo esc_html(date('d.m.Y H:i', strtotime($listing['created_at']))); ?></td>
+                                <td>
+                                    <button class="button button-small" onclick="openAdminEditModal(<?php echo $listing['id']; ?>)">Düzenle</button>
+                                    <a class="button button-small button-link-delete" href="<?php echo wp_nonce_url(admin_url('admin.php?page=ativ-listings&action=delete&id=' . $listing['id']), 'ativ_delete_' . $listing['id']); ?>" onclick="return confirm('Bu ilanı silmek istediğinizden emin misiniz?')">Sil</a>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php else : ?>
+                        <tr>
+                            <td colspan="7" style="text-align: center; padding: 20px;">İlan bulunamadı.</td>
+                        </tr>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+            
+            <?php if ($total_pages > 1) : ?>
+                <div class="pagination" style="margin-top: 20px;">
+                    <?php 
+                    for ($i = 1; $i <= $total_pages; $i++) {
+                        $class = $i === $current_page ? 'button-primary' : '';
+                        $search_param = $search ? '&s=' . urlencode($search) : '';
+                        echo '<a class="button ' . $class . '" href="' . esc_url(admin_url('admin.php?page=ativ-listings&paged=' . $i . $search_param)) . '">' . $i . '</a> ';
+                    }
+                    ?>
+                </div>
+            <?php endif; ?>
+            
+            <div style="margin-top: 20px; padding: 15px; background: #f5f5f5; border-left: 4px solid #0073aa;">
+                <p><strong>İstatistikler:</strong></p>
+                <p>Toplam İlan: <strong><?php echo $total; ?></strong></p>
+            </div>
+        </div>
+        
+        <style>
+            .admin-edit-modal {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.7);
+                z-index: 10000;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            .admin-edit-modal.active {
+                display: flex;
+            }
+            
+            .admin-edit-modal-content {
+                background: white;
+                border-radius: 8px;
+                width: 90%;
+                max-width: 800px;
+                max-height: 90vh;
+                overflow-y: auto;
+                padding: 30px;
+                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            }
+            
+            .admin-edit-modal-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 20px;
+            }
+            
+            .admin-edit-modal-close {
+                background: none;
+                border: none;
+                font-size: 28px;
+                cursor: pointer;
+                color: #999;
+            }
+            
+            .admin-edit-modal-close:hover {
+                color: #333;
+            }
+        </style>
+        
+        <div id="adminEditModal" class="admin-edit-modal">
+            <div class="admin-edit-modal-content">
+                <div class="admin-edit-modal-header">
+                    <h2>İlan Düzenle</h2>
+                    <button class="admin-edit-modal-close" onclick="closeAdminEditModal()">×</button>
+                </div>
+                <div id="adminEditContent"></div>
+            </div>
+        </div>
+        
+        <script>
+        function openAdminEditModal(id) {
+            const modal = document.getElementById('adminEditModal');
+            const content = document.getElementById('adminEditContent');
+            
+            // AJAX ile ilanı getir
+            fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'action=ativ_ajax&action_type=ativ_get_listing_for_admin&id=' + id
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    content.innerHTML = data.data;
+                    modal.classList.add('active');
+                } else {
+                    alert('İlan yüklenemedi: ' + (data.data || 'Hata'));
+                }
+            })
+            .catch(error => {
+                alert('Hata: ' + error);
+            });
+        }
+        
+        function submitAdminEditForm(e) {
+            e.preventDefault();
+            
+            const form = document.getElementById('adminEditForm');
+            const formData = new FormData(form);
+            
+            // Kalan görselleri topla
+            const remainingImages = [];
+            document.querySelectorAll('#adminImageGallery .admin-image-item').forEach(item => {
+                const imageData = item.querySelector('.image-data').value;
+                remainingImages.push({
+                    data: imageData,
+                    name: imageData.split('/').pop() // Dosya adı
+                });
+            });
+            
+            // AJAX ile güncelle
+            fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
+                method: 'POST',
+                body: new URLSearchParams({
+                    action: 'ativ_ajax',
+                    action_type: 'ativ_update_listing_admin',
+                    id: formData.get('id'),
+                    title: formData.get('title'),
+                    category: formData.get('category'),
+                    brand: formData.get('brand'),
+                    model: formData.get('model'),
+                    condition: formData.get('condition'),
+                    price: formData.get('price'),
+                    description: formData.get('description'),
+                    images: JSON.stringify(remainingImages)
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('İlan başarıyla güncellendi');
+                    closeAdminEditModal();
+                    location.reload();
+                } else {
+                    alert('Hata: ' + (data.data || 'Bilinmeyen hata'));
+                }
+            })
+            .catch(error => {
+                alert('Hata: ' + error);
+            });
+        }
+        
+        function closeAdminEditModal() {
+            document.getElementById('adminEditModal').classList.remove('active');
+        }
+        
+        function removeImageFromForm(btn) {
+            btn.closest('.admin-image-item').remove();
+            updateImageCount();
+        }
+        
+        function updateImageCount() {
+            const count = document.querySelectorAll('#adminImageGallery .admin-image-item').length;
+            document.getElementById('imageCount').textContent = count;
+        }
+        
+        // Modal dışına tıklandığında kapat
+        document.getElementById('adminEditModal')?.addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeAdminEditModal();
+            }
+        });
+        </script>
+        <?php
+    }
+    
+    /**
+     * Admin tarafından ilanı sil
+     */
+    private function delete_listing_admin($id) {
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'amator_ilanlar';
+        
+        // Yetki kontrolü
+        if (!current_user_can('manage_options')) {
+            return false;
+        }
+        
+        // Görselleri sil
+        $listing = $wpdb->get_row($wpdb->prepare("SELECT images FROM $table_name WHERE id = %d", $id), ARRAY_A);
+        if ($listing && $listing['images']) {
+            $images = json_decode($listing['images'], true);
+            if (is_array($images)) {
+                foreach ($images as $image) {
+                    if (isset($image['filename'])) {
+                        $file_path = ATIV_UPLOAD_DIR . $image['filename'];
+                        if (file_exists($file_path)) {
+                            unlink($file_path);
+                        }
+                    }
+                }
+            }
+        }
+        
+        // İlanı sil
+        $wpdb->delete($table_name, array('id' => $id), array('%d'));
+        
+        return true;
+    }
+    
+    /**
+     * ID ile ilanı getir
+     */
+    private function get_listing_by_id($id) {
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'amator_ilanlar';
+        $listing = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_name WHERE id = %d", $id), ARRAY_A);
+        
+        if ($listing) {
+            $listing['images'] = $this->get_listing_images($listing['id'], $listing['images']);
+        }
+        
+        return $listing;
+    }
+    
+    /**
+     * Admin için düzenleme formu oluştur
+     */
+    private function generate_admin_edit_form($listing) {
+        ob_start();
+        ?>
+        <form id="adminEditForm" onsubmit="submitAdminEditForm(event)">
+            <input type="hidden" name="id" value="<?php echo $listing['id']; ?>">
+            
+            <div style="margin-bottom: 15px;">
+                <label>Başlık</label>
+                <input type="text" name="title" value="<?php echo esc_attr($listing['title']); ?>" class="widefat" required>
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+                <label>Kategori</label>
+                <select name="category" class="widefat" required>
+                    <option value="transceiver" <?php selected($listing['category'], 'transceiver'); ?>>Telsiz</option>
+                    <option value="antenna" <?php selected($listing['category'], 'antenna'); ?>>Anten</option>
+                    <option value="amplifier" <?php selected($listing['category'], 'amplifier'); ?>>Amplifikatör</option>
+                    <option value="accessory" <?php selected($listing['category'], 'accessory'); ?>>Aksesuar</option>
+                    <option value="other" <?php selected($listing['category'], 'other'); ?>>Diğer</option>
+                </select>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                <div>
+                    <label>Marka</label>
+                    <input type="text" name="brand" value="<?php echo esc_attr($listing['brand']); ?>" class="widefat" required>
+                </div>
+                <div>
+                    <label>Model</label>
+                    <input type="text" name="model" value="<?php echo esc_attr($listing['model']); ?>" class="widefat" required>
+                </div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                <div>
+                    <label>Durum</label>
+                    <select name="condition" class="widefat" required>
+                        <option value="Sıfır" <?php selected($listing['condition'], 'Sıfır'); ?>>Sıfır</option>
+                        <option value="Kullanılmış" <?php selected($listing['condition'], 'Kullanılmış'); ?>>Kullanılmış</option>
+                        <option value="Arızalı" <?php selected($listing['condition'], 'Arızalı'); ?>>Arızalı</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Fiyat</label>
+                    <input type="number" name="price" value="<?php echo $listing['price']; ?>" class="widefat" step="0.01" required>
+                </div>
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+                <label>Açıklama</label>
+                <textarea name="description" class="widefat" rows="6" required><?php echo esc_textarea($listing['description']); ?></textarea>
+            </div>
+            
+            <div style="margin-bottom: 20px; padding: 15px; background: #f5f5f5; border-radius: 4px;">
+                <p><strong>Yüklü Görseller (<span id="imageCount"><?php echo count($listing['images']); ?></span> adet)</strong></p>
+                <div id="adminImageGallery" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px;">
+                    <?php foreach ($listing['images'] as $index => $image) : ?>
+                        <div class="admin-image-item" style="position: relative; text-align: center; cursor: pointer; overflow: hidden; border-radius: 4px;">
+                            <img src="<?php echo esc_url($image['data']); ?>" style="width: 100%; height: 100px; object-fit: cover; border-radius: 4px; display: block;">
+                            <button type="button" class="admin-image-delete-btn" onclick="removeImageFromForm(this)" style="position: absolute; top: 5px; right: 5px; background: #dc3545; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; padding: 0; cursor: pointer; font-size: 16px; display: none; align-items: center; justify-content: center;">×</button>
+                            <input type="hidden" class="image-data" value="<?php echo esc_attr($image['data']); ?>">
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+            
+            <style>
+            .admin-image-item:hover .admin-image-delete-btn {
+                display: flex !important;
+            }
+            .admin-image-delete-btn:hover {
+                background: #c82333 !important;
+            }
+            </style>
+            
+            <div style="display: flex; gap: 10px;">
+                <button type="submit" class="button button-primary">Güncelle</button>
+                <button type="button" class="button" onclick="closeAdminEditModal()">İptal</button>
+            </div>
+        </form>
+        <?php
+        return ob_get_clean();
+    }
+    
+    /**
+     * Admin tarafından ilanı güncelle
+     */
+    private function update_listing_admin($id, $data) {
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'amator_ilanlar';
+        
+        // Mevcut ilanı al
+        $existing_listing = $wpdb->get_row($wpdb->prepare("SELECT images FROM $table_name WHERE id = %d", $id), ARRAY_A);
+        $current_images = $existing_listing['images'] ? json_decode($existing_listing['images'], true) : array();
+        
+        $update_data = array(
+            'title' => sanitize_text_field($data['title'] ?? ''),
+            'category' => sanitize_text_field($data['category'] ?? ''),
+            'brand' => sanitize_text_field($data['brand'] ?? ''),
+            'model' => sanitize_text_field($data['model'] ?? ''),
+            'condition' => sanitize_text_field($data['condition'] ?? ''),
+            'price' => floatval($data['price'] ?? 0),
+            'description' => wp_kses_post($data['description'] ?? ''),
+        );
+        
+        // Görselleri işle
+        if (isset($data['images'])) {
+            $images_input = null;
+            if (is_string($data['images'])) {
+                $images_input = json_decode(stripslashes($data['images']), true);
+            } else {
+                $images_input = $data['images'];
+            }
+            
+            if (is_array($images_input)) {
+                // Kalan görselleri topla (silinmeyenler)
+                $kept_existing = array();
+                foreach ($images_input as $img) {
+                    if (isset($img['name']) && in_array($img['name'], $current_images, true)) {
+                        $kept_existing[] = $img['name'];
+                    }
+                }
+                
+                // Silinen görselleri diskte sil
+                $to_delete = array_diff($current_images, $kept_existing);
+                if (!empty($to_delete)) {
+                    $this->delete_listing_images($id, $to_delete);
+                }
+                
+                // Veritabanını güncelle
+                $update_data['images'] = !empty($kept_existing) ? json_encode($kept_existing) : null;
+            }
+        }
+        
+        $wpdb->update($table_name, $update_data, array('id' => $id));
+        
+        return true;
+    }
 }
 
-// Global helper fonksiyonu
 if (!function_exists('getCategoryName')) {
     function getCategoryName($category) {
         return AmateurTelsizIlanVitrini::get_category_name($category);
