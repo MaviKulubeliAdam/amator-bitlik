@@ -303,6 +303,10 @@
       overflow-y: auto !important;
       overflow-x: hidden !important;
       padding: 0 !important;
+      /* Modal genelindeki .modal-body grid düzenini iptal etmek için */
+      display: block !important;
+      /* Herhangi bir önceki gap değerini etkisiz kıl */
+      gap: 0 !important;
     }
 
     .terms-content {
