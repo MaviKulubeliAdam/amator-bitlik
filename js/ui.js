@@ -242,7 +242,7 @@ function applyFiltersAndRender() {
   if (currentPriceRangeFilter !== 'all') {
     const [min, max] = currentPriceRangeFilter.split('-').map(Number);
     filtered = filtered.filter(listing => {
-      const priceInTRY = listing.currency === 'TRY' ? listing.price : listing.price * 30;
+      const priceInTRY = convertToTRY(listing.price, listing.currency, listing);
       return priceInTRY >= min && priceInTRY <= max;
     });
   }
@@ -281,8 +281,8 @@ function sortListings(listings, sortType) {
     case 'price_asc':
       // Ucuzdan pahalıya - price ASC (TRY bazında)
       sorted.sort((a, b) => {
-        const priceA = convertToTRY(a.price, a.currency);
-        const priceB = convertToTRY(b.price, b.currency);
+        const priceA = convertToTRY(a.price, a.currency, a);
+        const priceB = convertToTRY(b.price, b.currency, b);
         return priceA - priceB;
       });
       break;
@@ -290,8 +290,8 @@ function sortListings(listings, sortType) {
     case 'price_desc':
       // Pahalıdan ucuza - price DESC (TRY bazında)
       sorted.sort((a, b) => {
-        const priceA = convertToTRY(a.price, a.currency);
-        const priceB = convertToTRY(b.price, b.currency);
+        const priceA = convertToTRY(a.price, a.currency, a);
+        const priceB = convertToTRY(b.price, b.currency, b);
         return priceB - priceA;
       });
       break;

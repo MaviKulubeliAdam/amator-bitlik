@@ -26,21 +26,62 @@ class AmateurTelsizIlanVitrini {
         // Kullanıcının kendi ilanlarını gösteren shortcode
         add_shortcode('amator_my_listings', array($this, 'display_my_listings'));
         register_activation_hook(__FILE__, array($this, 'activate'));
+        register_deactivation_hook(__FILE__, array($this, 'deactivate'));
         
         // Admin menüsü
         add_action('admin_menu', array($this, 'add_admin_menu'));
+        
+        // Döviz kuru güncelleme hook'u
+        add_action('ativ_update_exchange_rates', array($this, 'update_exchange_rates_from_api'));
     }
     
     public function init() {
         $this->create_tables();
+        $this->insert_default_exchange_rates();
         $this->create_upload_dir();
         add_action('wp_ajax_ativ_ajax', array($this, 'handle_ajax'));
         add_action('wp_ajax_nopriv_ativ_ajax', array($this, 'handle_ajax'));
+        
+        // Custom cron interval'ı tanımla (6 saat)
+        add_filter('cron_schedules', array($this, 'add_custom_cron_schedules'));
+        
+        // Her 6 saatte bir döviz kurlarını güncelle (cron job)
+        if (!wp_next_scheduled('ativ_update_exchange_rates')) {
+            wp_schedule_event(time(), 'sixhours', 'ativ_update_exchange_rates');
+        }
+        
+        // İlk kez açılışta kur güncelle
+        $last_update = get_transient('ativ_exchange_rates_updated');
+        if (!$last_update) {
+            $this->update_exchange_rates_from_api();
+        }
+    }
+    
+    /**
+     * Custom cron interval'ları ekle
+     */
+    public function add_custom_cron_schedules($schedules) {
+        if (!isset($schedules['sixhours'])) {
+            $schedules['sixhours'] = array(
+                'interval' => 6 * 3600, // 6 saat (saniye cinsinden)
+                'display'  => esc_html__('Her 6 Saat'),
+            );
+        }
+        return $schedules;
     }
     
     public function activate() {
         $this->create_tables();
         $this->create_upload_dir();
+        flush_rewrite_rules();
+    }
+    
+    public function deactivate() {
+        // Cron job'u temizle
+        $timestamp = wp_next_scheduled('ativ_update_exchange_rates');
+        if ($timestamp) {
+            wp_unschedule_event($timestamp, 'ativ_update_exchange_rates');
+        }
         flush_rewrite_rules();
     }
     
@@ -160,11 +201,33 @@ class AmateurTelsizIlanVitrini {
         UNIQUE KEY unique_template_key (template_key)
     ) $charset_collate;";
     
+    
     dbDelta($sql_templates);
     
     if (!empty($wpdb->last_error)) {
         error_log('ATIV Şablonlar tablosu oluşturma hatası: ' . $wpdb->last_error);
     }
+    
+    // Tablo 4: Döviz Kurları tablosu
+    $exchange_rates_table = $wpdb->prefix . 'amator_telsiz_doviz_kurlari';
+    
+    $sql_exchange_rates = "CREATE TABLE $exchange_rates_table (
+        id bigint(20) NOT NULL AUTO_INCREMENT,
+        currency varchar(10) NOT NULL,
+        rate decimal(10,4) NOT NULL DEFAULT 1,
+        updated_at datetime DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (id),
+        UNIQUE KEY unique_currency (currency)
+    ) $charset_collate;";
+    
+    dbDelta($sql_exchange_rates);
+    
+    if (!empty($wpdb->last_error)) {
+        error_log('ATIV Döviz Kurları tablosu oluşturma hatası: ' . $wpdb->last_error);
+    }
+    
+    // Varsayılan döviz kurlarını ekle
+    $this->insert_default_exchange_rates();
     
     // Varsayılan şablonları ekle (eğer yoksa)
     $this->insert_default_templates();
@@ -320,6 +383,7 @@ class AmateurTelsizIlanVitrini {
     // Kritik işlemler için oturum ve nonce kontrolü
     $critical_actions = ['save_listing', 'update_listing', 'delete_listing', 'get_user_listings'];
     $public_actions = ['get_listings', 'get_brands', 'get_locations'];
+    $admin_actions = ['test_update_rates'];
     
     if (in_array($action, $critical_actions)) {
         // Kritik işlemler için kullanıcıya özel nonce kontrolü
@@ -333,6 +397,11 @@ class AmateurTelsizIlanVitrini {
         // Herkese açık işlemler için genel nonce kontrolü
         if (!wp_verify_nonce($_POST['nonce'], 'ativ_public_nonce')) {
             wp_send_json_error('Güvenlik hatası');
+        }
+    } elseif (in_array($action, $admin_actions)) {
+        // Admin işlemleri - sadece yetki kontrolü
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Yetkiniz yok');
         }
     } else {
         // Diğer işlemler için varsayılan kontrol
@@ -366,6 +435,9 @@ class AmateurTelsizIlanVitrini {
         case 'upload_image':
             $this->upload_image();
             break;
+        case 'test_update_rates':
+            $this->test_update_exchange_rates();
+            break;
         default:
             wp_send_json_error('Geçersiz işlem');
     }
@@ -382,13 +454,16 @@ class AmateurTelsizIlanVitrini {
         wp_send_json_error('Veritabanı hatası: ' . $wpdb->last_error);
     }
     
-    // Görselleri URL formatına çevir
+    // Görselleri URL formatına çevir ve TL fiyatını hesapla
     foreach ($listings as &$listing) {
         $listing['images'] = $this->get_listing_images($listing['id'], $listing['images']);
         
         if (empty($listing['images'])) {
             $listing['emoji'] = '📻';
         }
+        
+        // Fiyatı TL'ye dönüştür (filtreleme için)
+        $listing['price_in_tl'] = $this->convert_to_tl($listing['price'], $listing['currency']);
     }
     
     wp_send_json_success($listings);
@@ -409,13 +484,16 @@ class AmateurTelsizIlanVitrini {
             wp_send_json_error('Veritabanı hatası: ' . $wpdb->last_error);
         }
 
-        // Görselleri URL formatına çevir
+        // Görselleri URL formatına çevir ve TL fiyatını hesapla
         foreach ($listings as &$listing) {
             $listing['images'] = $this->get_listing_images($listing['id'], $listing['images']);
             
             if (empty($listing['images'])) {
                 $listing['emoji'] = '📻';
             }
+            
+            // Fiyatı TL'ye dönüştür (filtreleme için)
+            $listing['price_in_tl'] = $this->convert_to_tl($listing['price'], $listing['currency']);
         }
 
         wp_send_json_success($listings);
@@ -940,7 +1018,13 @@ class AmateurTelsizIlanVitrini {
         
         $this_month = $wpdb->get_var("SELECT COUNT(*) FROM $table_name WHERE created_at >= DATE_SUB(NOW(), INTERVAL 1 MONTH)");
         $total_users = $wpdb->get_var("SELECT COUNT(DISTINCT user_id) FROM $table_name");
-        $total_amount = $wpdb->get_var("SELECT SUM(price) FROM $table_name");
+        
+        // Toplam değer hesaplaması - tüm fiyatları TL'ye dönüştür
+        $all_listings = $wpdb->get_results("SELECT price, currency FROM $table_name", ARRAY_A);
+        $total_amount = 0;
+        foreach ($all_listings as $listing) {
+            $total_amount += $this->convert_to_tl($listing['price'], $listing['currency']);
+        }
         
         // Kategorileri al
         $categories = array(
@@ -2449,6 +2533,7 @@ class AmateurTelsizIlanVitrini {
                 <div class="ativ-settings-tabs">
                     <button type="button" class="ativ-settings-tab active" onclick="switchTab(event, 'smtp')">📧 SMTP Ayarları</button>
                     <button type="button" class="ativ-settings-tab" onclick="switchTab(event, 'templates')">📝 Mail Şablonları</button>
+                    <button type="button" class="ativ-settings-tab" onclick="switchTab(event, 'debug')">🔧 Debug & Cron</button>
                 </div>
                 
                 <!-- SMTP Ayarları Sekmesi -->
@@ -2543,6 +2628,138 @@ class AmateurTelsizIlanVitrini {
                         <label for="mail_template_listing_deleted_by_admin">Yönetici tarafından silindiğinde gönderilecek e-posta</label>
                         <textarea id="mail_template_listing_deleted_by_admin" name="mail_template_listing_deleted_by_admin"><?php echo esc_textarea($mail_template_listing_deleted_by_admin); ?></textarea>
                     </div>
+                </div>
+                
+                <!-- Debug & Cron Sekmesi -->
+                <div id="debug" class="ativ-settings-content">
+                    <h2>🔧 Debug & Cron Bilgileri</h2>
+                    <p>WordPress cron sisteminin ve döviz kurları güncelleme sisteminin durumu.</p>
+                    
+                    <div class="ativ-form-group">
+                        <h3>📊 Cron Jobs Durumu</h3>
+                        <?php
+                        global $wpdb;
+                        
+                        // WordPress cron jobs'larını al
+                        $crons = _get_cron_array();
+                        
+                        echo '<table style="width: 100%; border-collapse: collapse; margin-top: 10px;">';
+                        echo '<tr style="background: #f5f5f5; border-bottom: 1px solid #ddd;">';
+                        echo '<th style="padding: 10px; text-align: left; border: 1px solid #ddd;">🎯 Cron Job</th>';
+                        echo '<th style="padding: 10px; text-align: left; border: 1px solid #ddd;">⏱️ Sonraki Çalışma</th>';
+                        echo '<th style="padding: 10px; text-align: left; border: 1px solid #ddd;">📍 Durum</th>';
+                        echo '</tr>';
+                        
+                        if (!empty($crons)) {
+                            foreach ($crons as $time => $cron) {
+                                foreach ($cron as $hook => $details) {
+                                    if (strpos($hook, 'ativ') !== false) {
+                                        $next_run = date('Y-m-d H:i:s', $time);
+                                        $is_past = time() > $time;
+                                        $status = $is_past ? '⚠️ Beklemede' : '✅ Planlandı';
+                                        $status_color = $is_past ? '#ffc107' : '#28a745';
+                                        
+                                        echo '<tr style="border-bottom: 1px solid #ddd;">';
+                                        echo '<td style="padding: 10px; border: 1px solid #ddd;"><strong>' . esc_html($hook) . '</strong></td>';
+                                        echo '<td style="padding: 10px; border: 1px solid #ddd;">' . $next_run . '</td>';
+                                        echo '<td style="padding: 10px; border: 1px solid #ddd; background: ' . $status_color . '22; color: ' . $status_color . '; font-weight: bold;">' . $status . '</td>';
+                                        echo '</tr>';
+                                    }
+                                }
+                            }
+                        } else {
+                            echo '<tr><td colspan="3" style="padding: 20px; text-align: center; color: #999;">❌ Hiç cron job bulunamadı</td></tr>';
+                        }
+                        
+                        echo '</table>';
+                        ?>
+                    </div>
+                    
+                    <div class="ativ-form-group">
+                        <h3>💱 Döviz Kurları Durumu</h3>
+                        <?php
+                        $rates_table = $wpdb->prefix . 'amator_telsiz_doviz_kurlari';
+                        $rates = $wpdb->get_results("SELECT currency, rate, updated_at FROM $rates_table ORDER BY updated_at DESC");
+                        
+                        echo '<table style="width: 100%; border-collapse: collapse; margin-top: 10px;">';
+                        echo '<tr style="background: #f5f5f5; border-bottom: 1px solid #ddd;">';
+                        echo '<th style="padding: 10px; text-align: left; border: 1px solid #ddd;">💱 Para Birimi</th>';
+                        echo '<th style="padding: 10px; text-align: left; border: 1px solid #ddd;">📈 Kur</th>';
+                        echo '<th style="padding: 10px; text-align: left; border: 1px solid #ddd;">🔄 Son Güncelleme</th>';
+                        echo '</tr>';
+                        
+                        foreach ($rates as $rate) {
+                            $updated = new DateTime($rate->updated_at);
+                            $now = new DateTime();
+                            $diff = $now->diff($updated);
+                            
+                            $time_ago = '';
+                            if ($diff->days > 0) $time_ago .= $diff->days . ' gün ';
+                            if ($diff->h > 0) $time_ago .= $diff->h . ' saat ';
+                            if ($diff->i > 0) $time_ago .= $diff->i . ' dakika ';
+                            if (empty($time_ago)) $time_ago = 'Az önce';
+                            
+                            echo '<tr style="border-bottom: 1px solid #ddd;">';
+                            echo '<td style="padding: 10px; border: 1px solid #ddd;"><strong>' . $rate->currency . '</strong></td>';
+                            echo '<td style="padding: 10px; border: 1px solid #ddd;"><strong>' . number_format($rate->rate, 4) . ' ₺</strong></td>';
+                            echo '<td style="padding: 10px; border: 1px solid #ddd;">' . $time_ago . 'önce (' . $rate->updated_at . ')</td>';
+                            echo '</tr>';
+                        }
+                        
+                        echo '</table>';
+                        ?>
+                    </div>
+                    
+                    <div class="ativ-form-group">
+                        <h3>🧪 Test İşlemleri</h3>
+                        <p style="margin-bottom: 15px;">Manuel olarak döviz kurlarını güncellemek için aşağıdaki butona tıkla:</p>
+                        <button type="button" class="ativ-btn-primary" onclick="testExchangeRateUpdate()">🔄 Döviz Kurlarını Şimdi Güncelle</button>
+                        <div id="test-result" style="margin-top: 15px; padding: 15px; border-radius: 4px; display: none;"></div>
+                    </div>
+                    
+                    <script>
+                    function testExchangeRateUpdate() {
+                        const btn = event.target;
+                        btn.disabled = true;
+                        btn.textContent = '⏳ Güncelleniyor...';
+                        
+                        fetch(ajaxurl, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded',
+                            },
+                            body: 'action=ativ_ajax&action_type=test_update_rates'
+                        })
+                        .then(r => r.json())
+                        .then(data => {
+                            const resultDiv = document.getElementById('test-result');
+                            if (data.success) {
+                                resultDiv.style.background = '#d4edda';
+                                resultDiv.style.color = '#155724';
+                                resultDiv.style.border = '1px solid #c3e6cb';
+                                resultDiv.innerHTML = '<strong>✅ Başarılı!</strong><br>' + data.data.message;
+                            } else {
+                                resultDiv.style.background = '#f8d7da';
+                                resultDiv.style.color = '#721c24';
+                                resultDiv.style.border = '1px solid #f5c6cb';
+                                resultDiv.innerHTML = '<strong>❌ Hata!</strong><br>' + (data.data?.message || JSON.stringify(data.data));
+                            }
+                            resultDiv.style.display = 'block';
+                            btn.disabled = false;
+                            btn.textContent = '🔄 Döviz Kurlarını Şimdi Güncelle';
+                        })
+                        .catch(err => {
+                            const resultDiv = document.getElementById('test-result');
+                            resultDiv.style.background = '#f8d7da';
+                            resultDiv.style.color = '#721c24';
+                            resultDiv.style.border = '1px solid #f5c6cb';
+                            resultDiv.innerHTML = '<strong>❌ Ağ Hatası!</strong><br>' + err.message;
+                            resultDiv.style.display = 'block';
+                            btn.disabled = false;
+                            btn.textContent = '🔄 Döviz Kurlarını Şimdi Güncelle';
+                        });
+                    }
+                    </script>
                 </div>
                 
                 <div class="ativ-form-buttons">
@@ -2756,6 +2973,158 @@ EOT
         );
         
         return $template ? (array) $template : null;
+    }
+    
+    /**
+     * Varsayılan döviz kurlarını ekle
+     */
+    private function insert_default_exchange_rates() {
+        global $wpdb;
+        $table = $wpdb->prefix . 'amator_telsiz_doviz_kurlari';
+        
+        // Varsayılan kurlar
+        $currencies = array(
+            array('currency' => 'TRY', 'rate' => 1.0),
+            array('currency' => 'USD', 'rate' => 32.50),  // Yaklaşık
+            array('currency' => 'EUR', 'rate' => 35.00)   // Yaklaşık
+        );
+        
+        foreach ($currencies as $currency) {
+            $existing = $wpdb->get_row(
+                $wpdb->prepare("SELECT id FROM $table WHERE currency = %s", $currency['currency'])
+            );
+            
+            if (!$existing) {
+                $wpdb->insert($table, $currency);
+            }
+        }
+    }
+    
+    /**
+     * API'den döviz kurlarını güncelle
+     */
+    public function update_exchange_rates_from_api() {
+        global $wpdb;
+        $table = $wpdb->prefix . 'amator_telsiz_doviz_kurlari';
+        
+        // Merkez Bankası API'sini kullan (Türkiye)
+        $url = 'https://www.tcmb.gov.tr/kurlar/today.xml';
+        
+        $response = wp_remote_get($url, array('timeout' => 10));
+        
+        if (is_wp_error($response)) {
+            error_log('ATIV Döviz Kuru Güncelleme Hatası: ' . $response->get_error_message());
+            return false;
+        }
+        
+        $body = wp_remote_retrieve_body($response);
+        
+        // XML parse et
+        $xml = simplexml_load_string($body);
+        
+        if (!$xml) {
+            error_log('ATIV XML Parse Hatası');
+            return false;
+        }
+        
+        $currencies = array('USD', 'EUR');
+        $updated_count = 0;
+        
+        foreach ($xml->Currency as $currency) {
+            $currency_code = (string) $currency['Kod'];
+            
+            if (in_array($currency_code, $currencies)) {
+                // Satış kuru (ForexSelling) veya Alış kuru (ForexBuying) kullan
+                $rate_str = (string) $currency->ForexSelling;
+                
+                if (empty($rate_str)) {
+                    $rate_str = (string) $currency->ForexBuying;
+                }
+                
+                // Virgülü noktaya çevir
+                $rate = (float) str_replace(',', '.', $rate_str);
+                
+                // Geçerli bir kur kontrolü
+                if ($rate > 0) {
+                    // Kuru güncelle
+                    $wpdb->query($wpdb->prepare(
+                        "UPDATE $table SET rate = %f, updated_at = %s WHERE currency = %s",
+                        $rate,
+                        current_time('mysql'),
+                        $currency_code
+                    ));
+                    $updated_count++;
+                    
+                    error_log("ATIV: $currency_code kuru güncellendi: $rate TL");
+                }
+            }
+        }
+        
+        // Güncelleme zamanını kaydet (24 saat)
+        if ($updated_count > 0) {
+            set_transient('ativ_exchange_rates_updated', true, 86400);
+            return true;
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Döviz kurunu al
+     */
+    public function get_exchange_rate($currency) {
+        global $wpdb;
+        $table = $wpdb->prefix . 'amator_telsiz_doviz_kurlari';
+        
+        if ($currency === 'TRY') {
+            return 1.0;
+        }
+        
+        $rate = $wpdb->get_var($wpdb->prepare(
+            "SELECT rate FROM $table WHERE currency = %s",
+            $currency
+        ));
+        
+        return $rate ? (float) $rate : 1.0;
+    }
+    
+    /**
+     * Fiyatı TL'ye dönüştür
+     */
+    public function convert_to_tl($price, $currency) {
+        if ($currency === 'TRY') {
+            return (float) $price;
+        }
+        
+        $rate = $this->get_exchange_rate($currency);
+        return (float) $price * $rate;
+    }
+    
+    /**
+     * Döviz kurlarını manuel olarak güncelle (test için)
+     */
+    public function test_update_exchange_rates() {
+        $result = $this->update_exchange_rates_from_api();
+        
+        if ($result) {
+            // Güncel kurları al
+            global $wpdb;
+            $rates_table = $wpdb->prefix . 'amator_telsiz_doviz_kurlari';
+            $rates = $wpdb->get_results("SELECT currency, rate FROM $rates_table");
+            
+            $rate_text = '';
+            foreach ($rates as $rate) {
+                $rate_text .= $rate->currency . ': ' . number_format($rate->rate, 4) . ' TRY, ';
+            }
+            
+            wp_send_json_success(array(
+                'message' => '✅ Döviz kurları başarıyla güncellendi!<br><br>Güncel Kurlar: ' . rtrim($rate_text, ', ')
+            ));
+        } else {
+            wp_send_json_error(array(
+                'message' => '❌ Döviz kurları güncellenemedi. API isteğinde hata oluştu. Lütfen error log\'unu kontrol edin.'
+            ));
+        }
     }
 }
 

@@ -202,9 +202,14 @@ function getCurrencySymbol(currency) {
  * @param {number} price - Fiyat
  * @param {string} currency - Para birimi
  */
-function convertToTRY(price, currency) {
+function convertToTRY(price, currency, listing) {
+  // Backend'ten gelen price_in_tl alanı varsa onu kullan
+  if (listing && listing.price_in_tl) {
+    return listing.price_in_tl;
+  }
+  
   if (currency === 'TRY') return price;
-  // USD ve EUR için yaklaşık dönüşüm oranı
+  // USD ve EUR için yaklaşık dönüşüm oranı (backend tarafından da kullanılıyor)
   return price * 30;
 }
 

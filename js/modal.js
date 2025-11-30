@@ -28,7 +28,7 @@ function setupModal() {
  * My-listings dropdown'ları ayarla
  */
 function setupMyListingsDropdowns() {
-  // Fiyat dropdown
+  // Fiyat sıralama dropdown (ucuz-pahalı)
   const priceSortButton = document.getElementById('priceSortButton');
   const priceSortMenu = document.getElementById('priceSortMenu');
   const priceSortOptions = document.querySelectorAll('#priceSortOptions .dropdown-option');
@@ -1203,13 +1203,13 @@ async function applyMyListingsFilters() {
     filtered = filtered.filter(l => l.status === statusFilter);
   }
   
-  // Fiyat sıralaması - dropdown'dan al
+  // Fiyat sıralaması - dropdown'dan al (TL karşılığı üzerinden sırala, display'de orijinal para birimi göster)
   const priceOption = document.querySelector('#priceSortOptions .dropdown-option.selected');
   const priceSort = priceOption?.dataset?.value || '';
   if (priceSort === 'price-asc') {
-    filtered.sort((a, b) => parseFloat(a.price || 0) - parseFloat(b.price || 0));
+    filtered.sort((a, b) => parseFloat(a.price_in_tl || 0) - parseFloat(b.price_in_tl || 0));
   } else if (priceSort === 'price-desc') {
-    filtered.sort((a, b) => parseFloat(b.price || 0) - parseFloat(a.price || 0));
+    filtered.sort((a, b) => parseFloat(b.price_in_tl || 0) - parseFloat(a.price_in_tl || 0));
   }
   
   // Tarih sıralaması - dropdown'dan al
@@ -1373,8 +1373,8 @@ async function refreshMyListingsGrid() {
       const listings = result.data;
       // Cache'e kaydet
       myListingsCache = listings;
-      // Render et (filtreleme uygulanacak)
-      renderMyListingsGrid(listings);
+      // Filtreleme ve sıralama uygulanarak render et
+      applyMyListingsFilters();
     } else {
       console.error('İlanlar yenilenirken hata - success false:', result);
     }
