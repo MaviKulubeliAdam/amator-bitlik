@@ -364,6 +364,12 @@ class AmateurTelsizIlanVitrini {
         global $wpdb;
         $table_name = $wpdb->prefix . 'amator_ilanlar';
         
+        // İlan bilgilerini al
+        $listing = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_name WHERE id = %d", $id), ARRAY_A);
+        if (!$listing) {
+            wp_send_json_error('İlan bulunamadı');
+        }
+        
         $update_data = array('status' => $status);
         if ($status === 'rejected') {
             $update_data['rejection_reason'] = $rejection_reason;
@@ -374,6 +380,20 @@ class AmateurTelsizIlanVitrini {
         $result = $wpdb->update($table_name, $update_data, array('id' => $id));
         
         if ($result !== false) {
+            // Duruma göre mail gönder
+            if ($status === 'approved') {
+                $this->send_notification('approved', array(
+                    'title' => $listing['title'],
+                    'listing_id' => $id
+                ), $listing['seller_email']);
+            } elseif ($status === 'rejected') {
+                $this->send_notification('rejected', array(
+                    'title' => $listing['title'],
+                    'rejection_reason' => $rejection_reason,
+                    'listing_id' => $id
+                ), $listing['seller_email']);
+            }
+            
             wp_send_json_success('Durum güncellendi');
         } else {
             wp_send_json_error('Durum güncellenirken hata oluştu');
@@ -383,7 +403,7 @@ class AmateurTelsizIlanVitrini {
     // Kritik işlemler için oturum ve nonce kontrolü
     $critical_actions = ['save_listing', 'update_listing', 'delete_listing', 'get_user_listings'];
     $public_actions = ['get_listings', 'get_brands', 'get_locations'];
-    $admin_actions = ['test_update_rates'];
+    $admin_actions = ['test_update_rates', 'test_send_mail'];
     
     if (in_array($action, $critical_actions)) {
         // Kritik işlemler için kullanıcıya özel nonce kontrolü
@@ -437,6 +457,9 @@ class AmateurTelsizIlanVitrini {
             break;
         case 'test_update_rates':
             $this->test_update_exchange_rates();
+            break;
+        case 'test_send_mail':
+            $this->test_send_mail();
             break;
         default:
             wp_send_json_error('Geçersiz işlem');
@@ -602,6 +625,13 @@ class AmateurTelsizIlanVitrini {
         );
         
         $wpdb->update($table_name, $update_data, array('id' => $listing_id));
+        
+        // Kullanıcıya e-posta gönder - İlan gönderildi
+        $this->send_notification('submitted', array(
+            'title' => $insert_data['title'],
+            'listing_id' => $listing_id,
+            'status' => 'Onay Bekleniyor'
+        ), $insert_data['seller_email']);
         
         wp_send_json_success(array('id' => $listing_id, 'message' => 'İlan başarıyla eklendi'));
     } else {
@@ -864,7 +894,7 @@ class AmateurTelsizIlanVitrini {
     $user_id = get_current_user_id();
     
     // İlanın kullanıcıya ait olup olmadığını kontrol et
-    $existing_listing = $wpdb->get_row($wpdb->prepare("SELECT user_id, images FROM $table_name WHERE id = %d", $id), ARRAY_A);
+    $existing_listing = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_name WHERE id = %d", $id), ARRAY_A);
     
     if (!$existing_listing) {
         wp_send_json_error('İlan bulunamadı');
@@ -885,6 +915,12 @@ class AmateurTelsizIlanVitrini {
     $result = $wpdb->delete($table_name, array('id' => $id));
     
     if ($result) {
+        // Kullanıcıya silme bildirimi gönder
+        $this->send_notification('deleted', array(
+            'title' => $existing_listing['title'],
+            'listing_id' => $id
+        ), $existing_listing['seller_email']);
+        
         wp_send_json_success(array('message' => 'İlan başarıyla silindi'));
     } else {
         wp_send_json_error('İlan silinirken hata oluştu: ' . $wpdb->last_error);
@@ -2064,8 +2100,10 @@ class AmateurTelsizIlanVitrini {
             return false;
         }
         
+        // İlan bilgilerini al
+        $listing = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_name WHERE id = %d", $id), ARRAY_A);
+        
         // Görselleri sil
-        $listing = $wpdb->get_row($wpdb->prepare("SELECT images FROM $table_name WHERE id = %d", $id), ARRAY_A);
         if ($listing && $listing['images']) {
             $images = json_decode($listing['images'], true);
             if (is_array($images)) {
@@ -2082,6 +2120,14 @@ class AmateurTelsizIlanVitrini {
         
         // İlanı sil
         $wpdb->delete($table_name, array('id' => $id), array('%d'));
+        
+        // Admin tarafından silinme bildirim e-postası gönder
+        if ($listing) {
+            $this->send_notification('deleted_by_admin', array(
+                'title' => $listing['title'],
+                'listing_id' => $id
+            ), $listing['seller_email']);
+        }
         
         return true;
     }
@@ -2520,10 +2566,16 @@ class AmateurTelsizIlanVitrini {
             }
             </style>
             
+            <script>
+                var ajaxurl = '<?php echo admin_url('admin-ajax.php'); ?>';
+                var ativSettingsNonce = '<?php echo wp_create_nonce('ativ_settings_nonce'); ?>';
+            </script>
+            
             <div class="ativ-settings-header">
                 <h1>⚙️ Amatör Bitlik - Ayarlar</h1>
                 <p>E-posta bildirimleri ve SMTP ayarlarını düzenleyin</p>
             </div>
+            
             
             <form method="POST" action="">
                 <?php wp_nonce_field('ativ_settings_nonce', 'ativ_settings_nonce'); ?>
@@ -2567,6 +2619,11 @@ class AmateurTelsizIlanVitrini {
                         <label for="smtp_password">SMTP Şifresi</label>
                         <input type="password" id="smtp_password" name="smtp_password" value="<?php echo esc_attr($smtp_password); ?>" placeholder="••••••••">
                         <div class="description">Gmail için uygulama şifresi (normal şifre değil)</div>
+                    </div>
+                    
+                    <div class="ativ-form-group">
+                        <button type="button" id="test-mail-btn" class="ativ-btn ativ-btn-primary">🧪 Test Mail Gönder</button>
+                        <div id="test-mail-result" class="test-mail-result"></div>
                     </div>
                     
                     <div class="ativ-settings-section-title">Gönderen Bilgileri</div>
@@ -2784,6 +2841,113 @@ class AmateurTelsizIlanVitrini {
             document.getElementById(tabName).classList.add('active');
             e.target.classList.add('active');
         }
+        
+        // Test Mail Buton İşlemleri
+        function setupTestMailButton() {
+            console.log('[DEBUG] setupTestMailButton() çağrıldı');
+            
+            const testMailBtn = document.getElementById('test-mail-btn');
+            console.log('[DEBUG] testMailBtn element bulundu:', !!testMailBtn);
+            
+            if (!testMailBtn) {
+                console.warn('[DEBUG] test-mail-btn elementi bulunamadı!');
+                return;
+            }
+            
+            testMailBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                console.log('[DEBUG] Test Mail butonuna tıklandı');
+                sendTestMail();
+            });
+        }
+        
+        function sendTestMail() {
+            console.log('[DEBUG] sendTestMail() çağrıldı');
+            
+            const testMailBtn = document.getElementById('test-mail-btn');
+            const resultDiv = document.getElementById('test-mail-result');
+            const smtpUsername = document.getElementById('smtp_username').value;
+            
+            console.log('[DEBUG] testMailBtn:', testMailBtn);
+            console.log('[DEBUG] resultDiv:', resultDiv);
+            console.log('[DEBUG] smtpUsername:', smtpUsername);
+            
+            // Validation
+            if (!smtpUsername) {
+                console.warn('[DEBUG] SMTP username boş!');
+                showTestMailResult('❌ Lütfen önce SMTP e-posta adresini girin!', 'error');
+                return;
+            }
+            
+            // Loading state
+            testMailBtn.disabled = true;
+            testMailBtn.textContent = '⏳ Gönderiliyor...';
+            resultDiv.className = 'test-mail-result loading';
+            resultDiv.innerHTML = 'Test e-postası gönderiliyor...';
+            
+            console.log('[DEBUG] Loading state ayarlandı');
+            console.log('[DEBUG] ajaxurl:', ajaxurl);
+            
+            // AJAX isteği
+            fetch(ajaxurl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({
+                    action: 'ativ_ajax',
+                    action_type: 'test_send_mail',
+                    to_email: smtpUsername,
+                    _wpnonce: ativSettingsNonce
+                })
+            })
+            .then(response => {
+                console.log('[DEBUG] Response alındı:', response.status);
+                if (!response.ok) {
+                    console.error('[DEBUG] HTTP error:', response.status);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('[DEBUG] JSON parse başarılı:', data);
+                testMailBtn.disabled = false;
+                testMailBtn.textContent = '🧪 Test Mail Gönder';
+                
+                if (data.success) {
+                    console.log('[DEBUG] Success:', data.data.message);
+                    showTestMailResult(data.data.message, 'success');
+                } else {
+                    console.log('[DEBUG] Error:', data.data?.message || JSON.stringify(data.data));
+                    showTestMailResult(data.data?.message || 'Bilinmeyen hata', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('[DEBUG] AJAX Error:', error);
+                testMailBtn.disabled = false;
+                testMailBtn.textContent = '🧪 Test Mail Gönder';
+                showTestMailResult('❌ İsteğinde hata: ' + error.message, 'error');
+            });
+        }
+        
+        function showTestMailResult(message, type) {
+            console.log('[DEBUG] showTestMailResult():', message, type);
+            
+            const resultDiv = document.getElementById('test-mail-result');
+            if (!resultDiv) {
+                console.warn('[DEBUG] test-mail-result elementi bulunamadı!');
+                return;
+            }
+            
+            resultDiv.className = 'test-mail-result ' + type;
+            resultDiv.innerHTML = message;
+            console.log('[DEBUG] Sonuç gösterildi');
+        }
+        
+        // Settings sayfasında test mail butonunu kur
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('[DEBUG] DOMContentLoaded event triggered');
+            setupTestMailButton();
+        });
         </script>
         <?php
     }
@@ -3101,6 +3265,150 @@ EOT
     }
     
     /**
+     * E-posta gönder
+     * 
+     * @param string $to E-posta adresi
+     * @param string $subject Konu
+     * @param string $message İçerik
+     * @param array $attachments Ekler (opsiyonel)
+     * @return bool Başarı durumu
+     */
+    public function send_mail($to, $subject, $message, $attachments = array()) {
+        $smtp_settings = $this->get_smtp_settings();
+        
+        // SMTP ayarları kontrol et
+        if (empty($smtp_settings['smtp_host']) || empty($smtp_settings['smtp_username'])) {
+            error_log('ATIV Mail: SMTP ayarları eksik');
+            return false;
+        }
+        
+        // PHPMailer kullan
+        require_once ABSPATH . WPINC . '/PHPMailer/PHPMailer.php';
+        require_once ABSPATH . WPINC . '/PHPMailer/SMTP.php';
+        require_once ABSPATH . WPINC . '/PHPMailer/Exception.php';
+        
+        $mail = new \PHPMailer\PHPMailer\PHPMailer();
+        
+        try {
+            // SMTP ayarlarını yapıl
+            $mail->isSMTP();
+            $mail->Host = $smtp_settings['smtp_host'];
+            $mail->SMTPAuth = true;
+            $mail->Username = $smtp_settings['smtp_username'];
+            $mail->Password = $smtp_settings['smtp_password'];
+            $mail->SMTPSecure = $smtp_settings['smtp_port'] == 465 ? 'ssl' : 'tls';
+            $mail->Port = intval($smtp_settings['smtp_port']);
+            
+            // Gönderici ve alıcı
+            $mail->setFrom(
+                $smtp_settings['smtp_from_email'],
+                $smtp_settings['smtp_from_name']
+            );
+            $mail->addAddress($to);
+            
+            // İçerik
+            $mail->isHTML(true);
+            $mail->CharSet = 'UTF-8';
+            $mail->Encoding = 'base64';
+            $mail->Subject = $subject;
+            $mail->Body = $message;
+            $mail->AltBody = strip_tags($message);
+            
+            // Ekler
+            if (!empty($attachments) && is_array($attachments)) {
+                foreach ($attachments as $attachment) {
+                    if (file_exists($attachment)) {
+                        $mail->addAttachment($attachment);
+                    }
+                }
+            }
+            
+            // Gönder
+            $result = $mail->send();
+            
+            if ($result) {
+                error_log("ATIV Mail: $to'ya başarılı gönderildi - Konu: $subject");
+                return true;
+            } else {
+                error_log("ATIV Mail: Gönderilemedi - $to - Error: " . $mail->ErrorInfo);
+                return false;
+            }
+            
+        } catch (Exception $e) {
+            error_log('ATIV Mail Exception: ' . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Bildirim e-postasını hazırla ve gönder
+     * 
+     * @param string $template_key Şablon anahtarı
+     * @param array $variables Şablon değişkenleri
+     * @param string $recipient_email Alıcı e-postası
+     * @return bool
+     */
+    public function send_notification($template_key, $variables = array(), $recipient_email = '') {
+        if (empty($recipient_email)) {
+            error_log('ATIV Notification: Alıcı e-postası boş');
+            return false;
+        }
+        
+        // Şablonu al
+        $template = $this->get_mail_template($template_key);
+        
+        if (!$template) {
+            error_log("ATIV Notification: $template_key şablonu bulunamadı");
+            return false;
+        }
+        
+        // Konu ve içeriği al
+        $subject = $template['template_subject'] ?? '';
+        $body = $template['template_body'] ?? '';
+        
+        // Değişkenleri değiştir
+        if (!empty($variables)) {
+            foreach ($variables as $key => $value) {
+                $body = str_replace('[' . strtoupper($key) . ']', $value, $body);
+                $subject = str_replace('[' . strtoupper($key) . ']', $value, $subject);
+            }
+        }
+        
+        // HTML wrapper ekle
+        $html_body = '
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <style>
+                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                .email-container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                .header { background: #667eea; color: white; padding: 20px; border-radius: 4px 4px 0 0; text-align: center; }
+                .content { background: #f9f9f9; padding: 20px; border: 1px solid #ddd; border-radius: 0 0 4px 4px; }
+                .footer { text-align: center; padding: 10px; font-size: 12px; color: #999; margin-top: 20px; }
+                .button { display: inline-block; background: #667eea; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; margin: 10px 0; }
+            </style>
+        </head>
+        <body>
+            <div class="email-container">
+                <div class="header">
+                    <h2>📻 Amatör Bitlik</h2>
+                </div>
+                <div class="content">
+                    ' . nl2br($body) . '
+                </div>
+                <div class="footer">
+                    <p>Bu e-posta otomatik olarak gönderilmiştir. Lütfen yanıtlamayınız.</p>
+                    <p>&copy; 2025 Amatör Bitlik - Tüm hakları saklıdır.</p>
+                </div>
+            </div>
+        </body>
+        </html>';
+        
+        // Mail gönder
+        return $this->send_mail($recipient_email, $subject, $html_body);
+    }
+    
+    /**
      * Döviz kurlarını manuel olarak güncelle (test için)
      */
     public function test_update_exchange_rates() {
@@ -3123,6 +3431,72 @@ EOT
         } else {
             wp_send_json_error(array(
                 'message' => '❌ Döviz kurları güncellenemedi. API isteğinde hata oluştu. Lütfen error log\'unu kontrol edin.'
+            ));
+        }
+    }
+    
+    /**
+     * Test mail gönder
+     */
+    public function test_send_mail() {
+        // Admin check
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array(
+                'message' => '❌ Yetkisiz erişim!'
+            ));
+            return;
+        }
+        
+        global $wpdb;
+        
+        // SMTP ayarlarını al
+        $settings_table = $wpdb->prefix . 'amator_telsiz_ayarlar';
+        $settings = $wpdb->get_row("SELECT * FROM $settings_table LIMIT 1");
+        
+        if (!$settings) {
+            wp_send_json_error(array(
+                'message' => '❌ SMTP ayarları bulunamadı!'
+            ));
+            return;
+        }
+        
+        $smtp_host = $settings->smtp_host;
+        $smtp_port = $settings->smtp_port;
+        $smtp_username = $settings->smtp_username;
+        $smtp_password = $settings->smtp_password;
+        $smtp_from_name = $settings->smtp_from_name;
+        $smtp_from_email = $settings->smtp_from_email;
+        
+        // Şu anki yöneticinin e-postasını al
+        $current_user = wp_get_current_user();
+        $to_email = $current_user->user_email;
+        
+        // SMTP ayarları boş mu kontrol et
+        if (empty($smtp_host) || empty($smtp_port) || empty($smtp_username) || empty($smtp_password)) {
+            wp_send_json_error(array(
+                'message' => '❌ SMTP ayarları eksik! Lütfen tüm SMTP ayarlarını doldurunuz.'
+            ));
+            return;
+        }
+        
+        // Basit test e-postası gönder
+        $subject = '🧪 Amatör Bitlik - Test E-postası';
+        $message = '<!DOCTYPE html><html><head><meta charset="UTF-8"><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"></head><body>';
+        $message .= '<h2>Test E-postası</h2>';
+        $message .= '<p>Bu, SMTP konfigürasyonunuzun düzgün çalışıp çalışmadığını kontrol etmek için gönderilen bir test e-postasıdır.</p>';
+        $message .= '<p><strong>Gönderim Saati:</strong> ' . current_time('mysql') . '</p>';
+        $message .= '<p>SMTP ayarlarınız doğru bir şekilde yapılandırılmış görünüyor!</p>';
+        $message .= '</body></html>';
+        
+        $result = $this->send_mail($to_email, $subject, $message);
+        
+        if ($result) {
+            wp_send_json_success(array(
+                'message' => '✅ Test e-postası başarıyla gönderildi! Lütfen e-posta kutunuzu kontrol edin (spam klasörünü de kontrol etmeyi unutmayın).'
+            ));
+        } else {
+            wp_send_json_error(array(
+                'message' => '❌ E-posta gönderilemedi! SMTP ayarlarını kontrol edin ve tekrar deneyin.'
             ));
         }
     }

@@ -338,6 +338,48 @@
       font-weight: 700;
     }
 
+    /* Test Mail Result Styles */
+    .test-mail-result {
+      margin-top: 12px;
+      padding: 12px 16px;
+      border-radius: 8px;
+      display: none;
+      font-size: 14px;
+      line-height: 1.6;
+      animation: slideDown 0.3s ease;
+    }
+
+    .test-mail-result.success {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+      display: block;
+    }
+
+    .test-mail-result.error {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+      display: block;
+    }
+
+    .test-mail-result.loading {
+      background-color: #d1ecf1;
+      color: #0c5460;
+      border: 1px solid #bee5eb;
+      display: block;
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
 /* Detail Panel Global Scope (added to body, not inside #ativ-container) */
 .detail-modal-overlay {
   position: fixed !important;
