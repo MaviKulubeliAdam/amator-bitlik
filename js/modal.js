@@ -118,6 +118,9 @@ function setupForm() {
   document.getElementById('addListingForm').addEventListener('submit', handleFormSubmit);
   document.getElementById('formImages').addEventListener('change', handleImageUpload);
 
+  // Terms modal setup
+  setupTermsModal();
+
   ['formTitle', 'formBrand', 'formModel', 'formSellerName', 'formLocation', 'formDescription'].forEach(id => {
     const input = document.getElementById(id);
     input.addEventListener('input', (e) => {
@@ -169,6 +172,62 @@ function setupForm() {
       e.target.reportValidity();
     }
   });
+}
+
+/**
+ * Kullanım sözleşmesi modalını ayarlar
+ */
+function setupTermsModal() {
+  const termsModal = document.getElementById('termsModal');
+  const openTermsLink = document.getElementById('openTermsLink');
+  const termsModalCloseBtn = document.getElementById('termsModalCloseBtn');
+  const closeTermsBtn = document.getElementById('closeTermsBtn');
+  const acceptTermsBtn = document.getElementById('acceptTermsBtn');
+  const termsCheckbox = document.getElementById('formTermsCheckbox');
+  
+  // Sözleşme linkine tıklandığında modalı aç
+  if (openTermsLink) {
+    openTermsLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (termsModal) {
+        termsModal.style.display = 'flex';
+        // Ana modalın scrollunu koru, sadece terms modal açılsın
+      }
+    });
+  }
+  
+  // Modal kapatma butonları
+  const closeTermsModal = () => {
+    if (termsModal) {
+      termsModal.style.display = 'none';
+    }
+  };
+  
+  if (termsModalCloseBtn) {
+    termsModalCloseBtn.addEventListener('click', closeTermsModal);
+  }
+  
+  if (closeTermsBtn) {
+    closeTermsBtn.addEventListener('click', closeTermsModal);
+  }
+  
+  // Kabul et butonu - checkbox'ı işaretle ve modalı kapat
+  if (acceptTermsBtn) {
+    acceptTermsBtn.addEventListener('click', () => {
+      termsCheckbox.checked = true;
+      closeTermsModal();
+    });
+  }
+  
+  // Modal dışına tıklandığında kapat
+  if (termsModal) {
+    termsModal.addEventListener('click', (e) => {
+      if (e.target.id === 'termsModal') {
+        closeTermsModal();
+      }
+    });
+  }
 }
 
 /**
@@ -283,6 +342,7 @@ function closeAddListingModal() {
   document.body.style.overflow = 'auto';
   document.getElementById('addListingForm').reset();
   document.getElementById('formMessage').innerHTML = '';
+  document.getElementById('formTermsCheckbox').checked = false; // Checkbox'ı temizle
   uploadedImages = [];
   featuredImageIndex = 0;
   editingListing = null;
@@ -438,6 +498,17 @@ async function handleFormSubmit(e) {
   
   const submitBtn = document.getElementById('formSubmitBtn');
   const messageDiv = document.getElementById('formMessage');
+  const termsCheckbox = document.getElementById('formTermsCheckbox');
+  
+  // Sözleşme kontrolü
+  if (!termsCheckbox.checked) {
+    messageDiv.innerHTML = '<div class="error-message">Lütfen Kullanım Sözleşmesi ve KVKK Aydınlatma Metni\'ni kabul edin.</div>';
+    termsCheckbox.focus();
+    setTimeout(() => {
+      messageDiv.innerHTML = '';
+    }, 3000);
+    return;
+  }
   
   submitBtn.disabled = true;
   const isEditing = editingListing !== null;
@@ -503,7 +574,14 @@ async function handleFormSubmit(e) {
     // Yükleme overlay'ini kaldır
     hideModalLoading();
     
-    // Basariyi göster ve modal kapat
+    // Submit butonu tekrar aktif et
+    submitBtn.disabled = false;
+    const submitBtnText = isEditing ? 
+      (isEditingRejectedListing ? 'Güncelle ve Tekrar Onaya Gönder' : 'Değişiklikleri Kaydet') : 
+      'İlanı Yayınla';
+    submitBtn.textContent = submitBtnText;
+    
+    // Başarıyı göster ve modal kapat
     setTimeout(() => {
       closeAddListingModal();
       isEditingRejectedListing = false; // Flag'i temizle
@@ -511,7 +589,8 @@ async function handleFormSubmit(e) {
   } catch (error) {
     hideModalLoading();
     messageDiv.innerHTML = '<div class="error-message">İşlem sırasında bir hata oluştu. Lütfen tekrar deneyin.</div>';
-  } finally {
+    
+    // Hata durumunda da butonu aktif et
     submitBtn.disabled = false;
     const submitBtnText = isEditing ? 
       (isEditingRejectedListing ? 'Güncelle ve Tekrar Onaya Gönder' : 'Değişiklikleri Kaydet') : 

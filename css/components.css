@@ -301,6 +301,33 @@
   font-weight: 700 !important;
 }
 
+.detail-header .close-btn {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  background: #f5f5f5 !important;
+  border: none !important;
+  border-radius: 50% !important;
+  color: #666 !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 24px !important;
+  font-weight: bold !important;
+  transition: all 0.3s !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  line-height: 1 !important;
+  width: 40px !important;
+  height: 40px !important;
+  flex-shrink: 0 !important;
+}
+
+.detail-header .close-btn:hover {
+  background: #e0e0e0 !important;
+  transform: rotate(90deg) !important;
+}
+
 .detail-sections {
   display: flex !important;
   flex-direction: column !important;
@@ -466,6 +493,10 @@
       z-index: 1000;
       animation: fadeIn 0.3s ease;
       padding: 20px;
+    }
+
+    #addListingModal {
+      z-index: 5000;
     }
 
     .modal-content {
