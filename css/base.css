@@ -4,12 +4,41 @@
 #ativ-container {
       box-sizing: border-box;
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      -webkit-text-size-adjust: 100%;
+      -webkit-tap-highlight-color: transparent;
     }
 
     #ativ-container *,
     #ativ-container *::before,
     #ativ-container *::after {
       box-sizing: border-box;
+    }
+
+    /* Touch-friendly improvements */
+    @media (max-width: 768px) {
+      #ativ-container button,
+      #ativ-container a,
+      #ativ-container input,
+      #ativ-container select,
+      #ativ-container textarea {
+        -webkit-tap-highlight-color: rgba(102, 126, 234, 0.2);
+      }
+
+      /* Minimum touch target size 44x44px */
+      #ativ-container button,
+      #ativ-container .dropdown-button,
+      #ativ-container .action-btn {
+        min-height: 44px;
+      }
+    }
+
+    /* Smooth scrolling for modals */
+    .modal-content,
+    .terms-modal-body,
+    .detail-right-section,
+    .dropdown-options {
+      -webkit-overflow-scrolling: touch;
+      scroll-behavior: smooth;
     }
 
     #ativ-container .container {
@@ -86,29 +115,62 @@
 
     @media (max-width: 768px) {
       .controls {
-        padding: 20px;
+        padding: 16px;
         border-radius: 16px;
-        gap: 12px;
+        gap: 10px;
+        flex-direction: column;
       }
 
       .search-box {
         order: -1;
         width: 100%;
+        min-width: 100%;
       }
 
       .filter-group {
-        width: calc(50% - 6px);
+        width: calc(50% - 5px);
+        min-width: calc(50% - 5px);
       }
 
       .add-listing-btn {
         width: 100%;
         order: 999;
+        margin-top: 8px;
+      }
+
+      /* Controls içindeki flex container düzeni */
+      .controls > div[style*="display: flex"] {
+        flex-wrap: wrap !important;
+        width: 100% !important;
+        gap: 10px !important;
       }
     }
 
     @media (max-width: 480px) {
+      .controls {
+        padding: 12px;
+        gap: 8px;
+      }
+
       .filter-group {
         width: 100%;
+        min-width: 100%;
+      }
+
+      .filter-select {
+        padding: 12px 14px;
+        font-size: 14px;
+        min-width: 100%;
+      }
+
+      .search-box input {
+        padding: 12px 40px 12px 16px;
+        font-size: 14px;
+      }
+
+      .add-listing-btn {
+        padding: 14px 24px;
+        font-size: 15px;
       }
     }
 
@@ -170,6 +232,21 @@
       flex-direction: column;
       gap: 8px;
       min-width: 180px;
+      flex: 1;
+    }
+
+    @media (max-width: 768px) {
+      .filter-group {
+        min-width: calc(50% - 6px);
+        flex: 0 0 calc(50% - 6px);
+      }
+    }
+
+    @media (max-width: 480px) {
+      .filter-group {
+        min-width: 100%;
+        flex: 0 0 100%;
+      }
     }
 
     .filter-label {
@@ -196,6 +273,13 @@
     .dropdown-filter {
       position: relative;
       min-width: 200px;
+      width: 100%;
+    }
+
+    @media (max-width: 768px) {
+      .dropdown-filter {
+        min-width: 100%;
+      }
     }
 
     .dropdown-button {
@@ -239,6 +323,13 @@
       top: calc(100% + 4px);
       left: 0;
       right: 0;
+    }
+
+    @media (max-width: 480px) {
+      .dropdown-menu {
+        max-height: 250px;
+        border-radius: 12px;
+      }
     }
 
     .dropdown-filter.open .dropdown-menu {
@@ -551,4 +642,58 @@
 
     .notice-info {
       border-left-color: #00a0d2;
+    }
+
+    /* My-Listings Sayfa - Filtre Container Mobil Düzenleme */
+    .my-listings-page .controls {
+      flex-direction: row;
+      flex-wrap: wrap;
+    }
+
+    .my-listings-page .controls > div[style*="display: flex"] {
+      flex: 1;
+      min-width: 0;
+    }
+
+    @media (max-width: 768px) {
+      .my-listings-page .controls {
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .my-listings-page .controls > div[style*="display: flex"] {
+        width: 100%;
+        flex-wrap: wrap;
+        gap: 8px !important;
+      }
+
+      .my-listings-page .dropdown-filter {
+        flex: 1;
+        min-width: calc(33% - 6px);
+      }
+
+      .my-listings-page .add-listing-btn {
+        width: 100%;
+        margin-top: 8px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .my-listings-page .controls {
+        padding: 12px;
+      }
+
+      .my-listings-page .controls > div[style*="display: flex"] {
+        gap: 6px !important;
+      }
+
+      .my-listings-page .dropdown-filter {
+        min-width: 100%;
+        flex: 0 0 100%;
+      }
+
+      .my-listings-page .filter-select {
+        padding: 12px 14px;
+        font-size: 14px;
+      }
     }
