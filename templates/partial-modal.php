@@ -60,63 +60,110 @@
 <div id="termsModal" class="modal-overlay" style="display: none;">
  <div class="modal-content terms-modal-content">
   <div class="modal-header">
-   <h2>Kullanım Sözleşmesi ve KVKK Aydınlatma Metni</h2>
+   <h2>📄 Kullanım Sözleşmesi ve KVKK Aydınlatma Metni</h2>
    <button class="modal-close" id="termsModalCloseBtn" aria-label="Kapat">×</button>
   </div>
   <div class="modal-body terms-modal-body">
    <div class="terms-content">
     
-    <h3>1. GENEL HÜKÜMLER</h3>
-    <p>İşbu sözleşme, Amatör Telsiz İlan Vitrini ("Platform") üzerinden ilan vermek isteyen kullanıcılar ile Platform yöneticisi arasında akdedilmiştir. Platform kullanımı, işbu sözleşmenin tüm hükümlerinin kabul edildiği anlamına gelir.</p>
+    <p style="text-align: center; font-weight: 600; color: #667eea; margin-bottom: 24px;">Son Güncelleme: 1 Aralık 2025</p>
     
-    <h3>2. PLATFORMUN ROLÜ VE SORUMLULUKLARI</h3>
-    <p><strong>2.1.</strong> Platform, yalnızca kullanıcıların ilan yayınlaması için bir vitrin niteliğinde olup, alım-satım işlemlerinde taraf değildir.</p>
-    <p><strong>2.2.</strong> Platform, ilanların doğruluğunu, ürünlerin kalitesini, alıcı ve satıcıların güvenilirliğini garanti etmez.</p>
-    <p><strong>2.3.</strong> Platform yöneticisi, alıcı ve satıcı arasında gerçekleşen işlemlerden, anlaşmazlıklardan, dolandırıcılık vakalarından, ürün teslimatından, ödeme süreçlerinden ve benzeri durumlardan hiçbir şekilde sorumlu değildir.</p>
-    <p><strong>2.4.</strong> Platform, yayınlanan ilanları uygun gördüğü takdirde onaylama, reddetme veya kaldırma hakkına sahiptir.</p>
+    <h3>1. TARAFLAR VE KONU</h3>
+    <p>İşbu sözleşme, Amatör Telsiz İlan Vitrini ("Platform") üzerinden ilan yayınlayan veya Platform'a erişen tüm kullanıcılar ("Kullanıcı") ile Platform yöneticisi arasında düzenlenmiştir.</p>
+    <p>Platform'a erişen, kullanan veya ilan oluşturan her kullanıcı, işbu sözleşmenin tamamını okumuş, anlamış ve tüm hükümleri kabul etmiş sayılır.</p>
     
-    <h3>3. KULLANICI SORUMLULUKLARI</h3>
-    <p><strong>3.1.</strong> Kullanıcılar, yayınladıkları ilanların içeriğinden, doğruluğundan ve yasallığından tamamen sorumludur.</p>
-    <p><strong>3.2.</strong> Alıcı ve satıcılar, aralarında gerçekleştirecekleri tüm işlemlerden münhasıran kendileri sorumludur.</p>
-    <p><strong>3.3.</strong> Kullanıcılar, Platform üzerinden gerçekleştirdikleri iletişim ve işlemlerde yasal mevzuata uygun davranmakla yükümlüdür.</p>
-    <p><strong>3.4.</strong> Kullanıcılar, yanıltıcı, yanlış veya yasadışı içerik paylaşmayacağını beyan ve taahhüt eder.</p>
-    <p><strong>3.5.</strong> Kullanıcılar, üçüncü kişilerin haklarını (telif, marka, patent vb.) ihlal eden içerik paylaşmayacağını kabul eder.</p>
+    <h3>2. PLATFORMUN HUKUKİ STATÜSÜ VE SORUMLULUKLARI</h3>
+    <p><strong>2.1. Yer Sağlayıcı Statüsü</strong></p>
+    <p>Platform, 5651 sayılı Kanun kapsamında <strong>"yer sağlayıcı"</strong>dır. Kullanıcı tarafından oluşturulan içeriklerin doğruluğunu, yasallığını veya güvenilirliğini denetleme yükümlülüğü yoktur.</p>
     
-    <h3>4. ALIM-SATIM İŞLEMLERİ</h3>
-    <p><strong>4.1.</strong> Platform, alıcı ve satıcı arasındaki alım-satım sürecinin hiçbir aşamasında aracı değildir.</p>
-    <p><strong>4.2.</strong> Ödeme, teslimat, kargo, ürün kontrolü ve iade süreçleri tamamen alıcı ve satıcı arasında gerçekleşir.</p>
-    <p><strong>4.3.</strong> Platform, ürün bedelinin ödenmemesi, ürünün teslim edilmemesi, ürün hasarları veya kalite sorunlarından sorumlu tutulamaz.</p>
-    <p><strong>4.4.</strong> Kullanıcıların, güvenli alışveriş için elden teslimat veya güvenli ödeme yöntemlerini tercih etmeleri tavsiye edilir.</p>
+    <p><strong>2.2. Aracı Değildir</strong></p>
+    <p>Platform, kullanıcılar arasında gerçekleşen satış, alış, takas, teslimat veya pazarlık süreçlerinde hiçbir şekilde taraf veya aracı değildir.</p>
     
-    <h3>5. GİZLİLİK VE VERİ KORUMA (KVKK)</h3>
-    <p><strong>5.1.</strong> Platform, kullanıcıların paylaştığı kişisel verileri 6698 sayılı Kişisel Verilerin Korunması Kanunu kapsamında işler.</p>
-    <p><strong>5.2.</strong> Toplanan kişisel veriler: Ad-soyad, e-posta, telefon, konum, çağrı işareti ve ilan içeriğidir.</p>
-    <p><strong>5.3.</strong> Veriler, yalnızca ilan yayınlama, iletişim kurma ve Platform hizmetlerinin sağlanması amacıyla kullanılır.</p>
-    <p><strong>5.4.</strong> Kullanıcılar, verilerinin silinmesini, güncellenmesini veya kendilerine iletilmesini talep edebilir.</p>
-    <p><strong>5.5.</strong> Platform, kişisel verileri üçüncü kişilerle paylaşmaz; ancak yasal zorunluluklar haricinde ifşa etmez.</p>
-    <p><strong>5.6.</strong> İlan verenler, ilanlarında paylaştıkları iletişim bilgilerinin herkese açık olacağını kabul eder.</p>
+    <p><strong>2.3. Garanti Verilmez</strong></p>
+    <p>Platform; ürünlerin doğruluğunu, ürünün niteliğini, kullanıcıların kimliğini veya güvenilirliğini, ilan içeriklerinin doğruluğunu garanti etmez.</p>
     
-    <h3>6. SORUMLULUK REDDİ</h3>
-    <p><strong>6.1.</strong> Platform, kullanıcılar arasında yaşanan dolandırıcılık, hırsızlık, sahtecilik, gasp ve benzeri suçlardan sorumlu değildir.</p>
-    <p><strong>6.2.</strong> Platform, kullanıcıların birbirine verdiği zararlardan, maddi ve manevi kayıplardan sorumlu tutulamaz.</p>
-    <p><strong>6.3.</strong> Platform, teknik arıza, veri kaybı, erişim sorunu gibi durumlardan kaynaklanan zararlardan sorumlu değildir.</p>
-    <p><strong>6.4.</strong> Kullanıcılar, Platform kullanımından kaynaklanan tüm riskleri kabul eder.</p>
+    <p><strong>2.4. Sorumluluk Reddi</strong></p>
+    <p>Platform; dolandırıcılık, sahtecilik, ödeme problemleri, ürün teslim edilmemesi, hasarlı ürün gönderimi dahil olmak üzere alıcı ve satıcı arasındaki hiçbir işlemden sorumlu değildir.</p>
     
-    <h3>7. UYUŞMAZLIK ÇÖZÜMÜ</h3>
-    <p><strong>7.1.</strong> İşbu sözleşmeden doğan uyuşmazlıklarda Türkiye Cumhuriyeti yasaları uygulanır.</p>
-    <p><strong>7.2.</strong> Uyuşmazlıkların çözümünde İstanbul Mahkemeleri ve İcra Daireleri yetkilidir.</p>
+    <p><strong>2.5. İlan Onaylama Yetkisi</strong></p>
+    <p>Platform, uygun görmediği ilanları onaylama, düzenleme talep etme, reddetme veya kaldırma hakkını saklı tutar.</p>
     
-    <h3>8. SÖZLEŞME DEĞİŞİKLİKLERİ</h3>
-    <p><strong>8.1.</strong> Platform yöneticisi, işbu sözleşmeyi önceden haber vermeksizin değiştirme hakkını saklı tutar.</p>
-    <p><strong>8.2.</strong> Güncel sözleşme her zaman Platform üzerinden erişilebilir durumdadır.</p>
+    <h3>3. KULLANICI YÜKÜMLÜLÜKLERİ</h3>
+    <p><strong>3.1. İlan İçeriği Kullanıcıya Aittir</strong></p>
+    <p>Kullanıcı, paylaştığı tüm içeriklerden (açıklama, fotoğraf, fiyat, iletişim bilgisi, çağrı işareti vb.) bizzat sorumludur.</p>
     
-    <h3>9. KABUL VE ONAY</h3>
-    <p><strong>9.1.</strong> İşbu sözleşmeyi onaylayarak, yukarıdaki tüm maddeleri okuduğunuzu, anladığınızı ve kabul ettiğinizi beyan edersiniz.</p>
-    <p><strong>9.2.</strong> Platform kullanımı ile tüm sorumlulukların size ait olduğunu ve Platform yöneticisini herhangi bir zarardan sorumlu tutmayacağınızı kabul edersiniz.</p>
+    <p><strong>3.2. Ürünlerin Yasallığı</strong></p>
+    <p>İlan verilen ürünün yasallığı, lisans gerektirip gerektirmediği, teknik özellikleri, kullanımında doğabilecek tüm hukuki sonuçlar yalnızca kullanıcıya aittir.</p>
+    
+    <p><strong>3.3. Yasal Sorumluluk</strong></p>
+    <p>Kullanıcı, Platform'u kullanırken yürürlükteki tüm mevzuata uygun davranmayı kabul eder. Hukuka aykırı işlem yapılması hâlinde doğacak cezaî ve hukukî sorumluluk tamamen kullanıcıya aittir.</p>
+    
+    <p><strong>3.4. Yanlış veya Yanıltıcı Bilgi Paylaşmama</strong></p>
+    <p>Kullanıcı, yanlış, eksik veya aldatıcı bilgi paylaşmayacağını taahhüt eder.</p>
+    
+    <p><strong>3.5. Üçüncü Kişi Haklarının Korunması</strong></p>
+    <p>Kullanıcı, üçüncü kişilerin marka, telif, patent gibi haklarını ihlal eden içerik paylaşamaz.</p>
+    
+    <h3>4. ALIM-SATIM VE İŞLEM SÜREÇLERİ</h3>
+    <p><strong>4.1. Platform Aracı Değildir</strong></p>
+    <p>Ödeme, pazarlık, teslimat, ürün kontrolü ve iade süreçleri tamamen alıcı ve satıcı arasındadır.</p>
+    
+    <p><strong>4.2. Dış Kanallar Üzerinden İletişim</strong></p>
+    <p>Kullanıcılar WhatsApp, telefon, e-posta veya diğer dış iletişim kanallarını kullanarak kendi aralarında iletişim kurar. Bu iletişimlerden doğan tüm riskler kullanıcıya aittir.</p>
+    
+    <p><strong>4.3. Güvenli Alışveriş Sorumluluğu</strong></p>
+    <p>Kullanıcılar, ürün ve satıcı doğrulamasını yapmakla yükümlüdür. Platform, güvenli alışveriş garantisi vermez.</p>
+    
+    <h3>5. GİZLİLİK VE KİŞİSEL VERİLERİN KORUNMASI (KVKK)</h3>
+    <p><strong>5.1. İşlenen Kişisel Veriler</strong></p>
+    <p>Platform tarafından işlenen veriler: Ad-soyad, e-posta adresi, telefon numarası, konum bilgisi, çağrı işareti, ilan içeriği ve görseller, trafik ve log kayıtları (5651 sayılı Kanun gereği).</p>
+    
+    <p><strong>5.2. Veri İşleme Amaçları</strong></p>
+    <p>Kişisel veriler; ilan yayınlama, kullanıcıların birbirine ulaşması, Platform hizmetlerinin sağlanması amaçlarıyla işlenmektedir.</p>
+    
+    <p><strong>5.3. Hukuki Sebep</strong></p>
+    <p>Veriler, sözleşmenin kurulması ve ifası, meşru menfaat, 5651 sayılı Kanun gereği log tutma yükümlülüğü kapsamında işlenmektedir.</p>
+    
+    <p><strong>5.4. Veri Paylaşımı</strong></p>
+    <p>Kişisel veriler üçüncü kişilerle paylaşılmaz, ancak yetkili kurumların talebi halinde hukuki yükümlülük kapsamında paylaşılabilir.</p>
+    
+    <p><strong>5.5. Kullanıcı Hakları</strong></p>
+    <p>Kullanıcı; veri güncelleme, silme, erişim ve bilgi talebi haklarına sahiptir.</p>
+    
+    <p><strong>5.6. Açık Rıza</strong></p>
+    <p>İlan veren kullanıcı, ilanında paylaştığı bilgilerin herkese açık olacağını kabul eder.</p>
+    
+    <h3>6. SORUMLULUK REDDİ VE TAZMİNAT</h3>
+    <p><strong>6.1. Dolandırıcılık ve Suçlar</strong></p>
+    <p>Platform, kullanıcılar arasında gerçekleşen dolandırıcılık, hırsızlık, sahtecilik, gasp, tehdit vb. tüm suçlardan sorumlu değildir.</p>
+    
+    <p><strong>6.2. Maddi ve Manevi Zararlar</strong></p>
+    <p>Platform, kullanıcıların birbirine verdiği zararlardan veya Platform kullanımından doğan maddi/manevi kayıplardan sorumlu tutulamaz.</p>
+    
+    <p><strong>6.3. Teknik Arızalar</strong></p>
+    <p>Platform; erişim hataları, sunucu arızası, veri kaybı, bakım çalışmaları vb. sebeplerle yaşanan aksaklıklardan sorumlu değildir.</p>
+    
+    <p><strong>6.4. Riskin Kullanıcı Tarafından Kabulü</strong></p>
+    <p>Kullanıcı, Platform'u kullanmakla tüm riskleri kabul ettiğini beyan eder.</p>
+    
+    <p><strong>6.5. Tazminat Hükmü</strong></p>
+    <p>Kullanıcı, Platform'un kullanımından doğabilecek tüm zarar, dava, şikayet ve talep durumlarında Platform işletmecisini tazminat sorumluluğundan muaf tuttuğunu kabul eder.</p>
+    
+    <h3>7. DELİL SÖZLEŞMESİ</h3>
+    <p>Platform'un elektronik kayıtları, log kayıtları, veritabanı kayıtları, e-posta yazışmaları ve diğer dijital kayıtları kesin delil niteliğindedir.</p>
+    
+    <h3>8. UYUŞMAZLIK ÇÖZÜMÜ</h3>
+    <p>Uyuşmazlık durumunda Türkiye Cumhuriyeti kanunları uygulanır. Yetkili mahkeme: İstanbul Mahkemeleri ve İcra Daireleridir.</p>
+    
+    <h3>9. SÖZLEŞME DEĞİŞİKLİKLERİ</h3>
+    <p>Platform, sözleşme hükümlerini önceden bildirmeksizin güncelleme hakkını saklı tutar. Güncel sözleşmenin yayınlanmasıyla birlikte yeni hükümler yürürlüğe girer. Platform'un kullanılmaya devam edilmesi yeni hükümlerinin kabul edildiği anlamına gelir.</p>
+    
+    <h3>10. KABUL BEYANI</h3>
+    <p>Kullanıcı, Platform'a üye olarak veya ilan vererek işbu sözleşmenin tüm hükümlerini okuduğunu, anladığını ve aynen kabul ettiğini; Platform'u kullanmanın tüm sorumluluğunu üstlendiğini beyan eder.</p>
     
     <div class="terms-footer">
-     <p><strong>Son Güncelleme:</strong> 1 Aralık 2025</p>
-     <p><em>Bu sözleşmeyi dikkatlice okuyunuz. Kabul etmediğiniz takdirde Platform'u kullanamazsınız.</em></p>
+     <p><strong>⚖️ Hukuki Uyarı:</strong> Bu sözleşme, 5651 sayılı İnternet Ortamında Yapılan Yayınların Düzenlenmesi ve Bu Yayınlar Yoluyla İşlenen Suçlarla Mücadele Edilmesi Hakkında Kanun ve 6698 sayılı Kişisel Verilerin Korunması Kanunu çerçevesinde düzenlenmiştir.</p>
+     <p><em>📌 Bu metni dikkatlice okuyunuz. Platform kullanımı, işbu sözleşmenin tüm hükümlerini kabul ettiğiniz anlamına gelir.</em></p>
     </div>
     
    </div>

@@ -158,5 +158,5 @@ if (is_user_logged_in()):
 <!-- Kullanım Sözleşmesi / KVKK Floating Button -->
 <button id="termsFloatingBtn" class="terms-floating-btn" aria-label="Kullanım Sözleşmesi ve KVKK Aydınlatma Metni">
   📜 Kullanım & KVKK
-  <small>Okuyun ve onaylayın</small>
+  <small>Görüntülemek İçin Tıklayın</small>
 </button>
