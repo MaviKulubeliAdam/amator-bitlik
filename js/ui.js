@@ -447,12 +447,12 @@ function createListingCard(listing) {
     
     if (listing.images && listing.images.length > 0) {
         const featuredIndex = listing.featured_image_index || 0;
-        displayImage = `<img src="${listing.images[featuredIndex].data}" alt="${listing.title}">`;
+        displayImage = `<img src="${escapeHtml(listing.images[featuredIndex].data)}" alt="${escapeHtml(listing.title)}">`;
         if (listing.images.length > 1) {
             imageCountBadge = `<div class="image-count-badge">${listing.images.length} 📷</div>`;
         }
     } else {
-        displayImage = listing.emoji || '📻';
+        displayImage = escapeHtml(listing.emoji || '📻');
     }
 
     const currencySymbol = getCurrencySymbol(listing.currency || 'TRY');
@@ -465,15 +465,15 @@ function createListingCard(listing) {
         ${imageCountBadge}
         ${isMyListing && pageType === 'my-listings' ? `
           <div class="listing-actions">
-            <button class="action-btn edit-btn" onclick="event.stopPropagation(); editListing(${listing.id})" title="Düzenle" aria-label="İlanı düzenle">✏️</button>
-            <button class="action-btn delete-btn" onclick="event.stopPropagation(); confirmDeleteListing(${listing.id})" title="Sil" aria-label="İlanı sil">🗑️</button>
+            <button class="action-btn edit-btn" onclick="event.stopPropagation(); editListing(${parseInt(listing.id)})" title="Düzenle" aria-label="İlanı düzenle">✏️</button>
+            <button class="action-btn delete-btn" onclick="event.stopPropagation(); confirmDeleteListing(${parseInt(listing.id)})" title="Sil" aria-label="İlanı sil">🗑️</button>
           </div>
         ` : ''}
         <div class="listing-image">${displayImage}</div>
         <div class="listing-content">
-          <h3 class="listing-title">${listing.title}</h3>
-          <p class="listing-callsign">${listing.callsign}</p>
-          <p class="listing-price">${currencySymbol}${listing.price} ${listing.currency || 'TRY'}</p>
+          <h3 class="listing-title">${escapeHtml(listing.title)}</h3>
+          <p class="listing-callsign">${escapeHtml(listing.callsign)}</p>
+          <p class="listing-price">${currencySymbol}${escapeHtml(String(listing.price))} ${escapeHtml(listing.currency || 'TRY')}</p>
         </div>
       `;
 

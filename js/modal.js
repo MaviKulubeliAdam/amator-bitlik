@@ -1141,9 +1141,9 @@ function openDetailPanel(listing) {
         <div class="detail-card-preview">
           <div id="detailSlider"></div>
           <div class="detail-preview-content">
-            <h3 class="detail-preview-title">${listing.title}</h3>
-            <p class="detail-preview-callsign">${listing.callsign}</p>
-            <p class="detail-preview-price">${currencySymbol}${listing.price} ${listing.currency || 'TRY'}</p>
+            <h3 class="detail-preview-title">${escapeHtml(listing.title)}</h3>
+            <p class="detail-preview-callsign">${escapeHtml(listing.callsign)}</p>
+            <p class="detail-preview-price">${currencySymbol}${escapeHtml(String(listing.price))} ${escapeHtml(listing.currency || 'TRY')}</p>
           </div>
         </div>
       </div>
@@ -1154,12 +1154,12 @@ function openDetailPanel(listing) {
       <div class="detail-left-section">
         <div class="detail-card-preview">
           <div class="detail-preview-image">
-            ${listing.emoji || '📻'}
+            ${escapeHtml(listing.emoji || '📻')}
           </div>
           <div class="detail-preview-content">
-            <h3 class="detail-preview-title">${listing.title}</h3>
-            <p class="detail-preview-callsign">${listing.callsign}</p>
-            <p class="detail-preview-price">${currencySymbol}${listing.price} ${listing.currency || 'TRY'}</p>
+            <h3 class="detail-preview-title">${escapeHtml(listing.title)}</h3>
+            <p class="detail-preview-callsign">${escapeHtml(listing.callsign)}</p>
+            <p class="detail-preview-price">${currencySymbol}${escapeHtml(String(listing.price))} ${escapeHtml(listing.currency || 'TRY')}</p>
           </div>
         </div>
       </div>
@@ -1215,15 +1215,15 @@ function createDetailSections(listing) {
       <h3>Ürün Bilgileri</h3>
       <div class="detail-info">
         <div class="detail-label">Marka</div>
-        <div class="detail-value">${listing.brand}</div>
+        <div class="detail-value">${escapeHtml(listing.brand)}</div>
       </div>
       <div class="detail-info">
         <div class="detail-label">Model</div>
-        <div class="detail-value">${listing.model}</div>
+        <div class="detail-value">${escapeHtml(listing.model)}</div>
       </div>
       <div class="detail-info">
         <div class="detail-label">Durum</div>
-        <div class="detail-value">${listing.condition}</div>
+        <div class="detail-value">${escapeHtml(listing.condition)}</div>
       </div>
       <div class="detail-info">
         <div class="detail-label">Kategori</div>
@@ -1231,36 +1231,36 @@ function createDetailSections(listing) {
       </div>
       <div class="detail-info">
         <div class="detail-label">Fiyat</div>
-        <div class="detail-value">${getCurrencySymbol(listing.currency || 'TRY')}${listing.price} ${listing.currency || 'TRY'}</div>
+        <div class="detail-value">${getCurrencySymbol(listing.currency || 'TRY')}${escapeHtml(String(listing.price))} ${escapeHtml(listing.currency || 'TRY')}</div>
       </div>
     </div>
     <div class="product-details">
       <h3>Açıklama</h3>
       <div class="detail-description">
-        <p>${listing.description}</p>
+        <p>${escapeHtml(listing.description)}</p>
       </div>
     </div>
     <div class="seller-section">
       <h3>Satıcı Bilgileri</h3>
       <div class="detail-info">
         <div class="detail-label">Ad Soyad</div>
-        <div class="detail-value">${listing.seller_name}</div>
+        <div class="detail-value">${escapeHtml(listing.seller_name)}</div>
       </div>
       <div class="detail-info">
         <div class="detail-label">Çağrı İşareti</div>
-        <div class="detail-value">${listing.callsign}</div>
+        <div class="detail-value">${escapeHtml(listing.callsign)}</div>
       </div>
       <div class="detail-info">
         <div class="detail-label">Konum</div>
-        <div class="detail-value">${listing.location}</div>
+        <div class="detail-value">${escapeHtml(listing.location)}</div>
       </div>
       <div class="detail-info">
         <div class="detail-label">E-posta</div>
-        <div class="detail-value">${listing.seller_email}</div>
+        <div class="detail-value">${escapeHtml(listing.seller_email)}</div>
       </div>
       <div class="detail-info">
         <div class="detail-label">Telefon</div>
-        <div class="detail-value">${listing.seller_phone}</div>
+        <div class="detail-value">${escapeHtml(listing.seller_phone)}</div>
       </div>
     </div>
   `;
@@ -1538,20 +1538,7 @@ function getListingImageUrl(listing) {
   return '';
 }
 
-/**
- * HTML karakterlerini escape et
- */
-function escapeHtml(text) {
-  if (!text) return '';
-  const map = {
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#039;'
-  };
-  return text.replace(/[&<>"']/g, m => map[m]);
-}
+// escapeHtml fonksiyonu core.js'de tanımlı - XSS koruması için
 
 window.goToSlide = goToSlide;
 window.initSlider = initSlider;

@@ -221,5 +221,21 @@ function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+/**
+ * HTML karakterlerini escape et - XSS koruması
+ * @param {string} text - Escape edilecek metin
+ */
+function escapeHtml(text) {
+  if (!text) return '';
+  const map = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;'
+  };
+  return String(text).replace(/[&<>"']/g, m => map[m]);
+}
+
 // DOMContentLoaded event listener
 document.addEventListener('DOMContentLoaded', initApp);

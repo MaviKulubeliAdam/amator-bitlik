@@ -504,9 +504,6 @@ class AmateurTelsizIlanVitrini {
         case 'delete_listing':
             $this->delete_listing();
             break;
-        case 'upload_image':
-            $this->upload_image();
-            break;
         case 'test_update_rates':
             $this->test_update_exchange_rates();
             break;

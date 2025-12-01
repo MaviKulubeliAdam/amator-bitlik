@@ -408,16 +408,7 @@
       }
     }
 
-    @keyframes slideDown {
-      from {
-        opacity: 0;
-        transform: translateY(-10px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
+/* Note: slideDown keyframe is defined in base.css */
 
 /* Benim İlanlarım Sayfa - Liste View */
 .listings-list {
