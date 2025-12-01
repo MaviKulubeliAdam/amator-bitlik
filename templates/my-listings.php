@@ -188,3 +188,8 @@
     </div>
   </div>
     <?php include ATIV_PLUGIN_PATH . 'templates/partial-modal.php'; ?>
+    <!-- Kullanım Sözleşmesi / KVKK Floating Button -->
+    <button id="termsFloatingBtn" class="terms-floating-btn" aria-label="Kullanım Sözleşmesi ve KVKK Aydınlatma Metni">
+      📜 Kullanım & KVKK
+      <small>Okuyun ve onaylayın</small>
+    </button>

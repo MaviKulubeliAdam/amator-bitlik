@@ -241,6 +241,7 @@ class AmateurTelsizIlanVitrini {
     wp_register_script('ativ-core', ATIV_PLUGIN_URL . 'js/core.js', array('jquery'), '1.1', true);
     wp_register_script('ativ-ui', ATIV_PLUGIN_URL . 'js/ui.js', array('ativ-core'), '1.1', true);
     wp_register_script('ativ-modal', ATIV_PLUGIN_URL . 'js/modal.js', array('ativ-ui'), '1.1', true);
+    wp_register_script('ativ-terms', ATIV_PLUGIN_URL . 'js/terms.js', array('ativ-modal'), '1.0', true);
     
     $current_user_id = get_current_user_id();
     
@@ -263,6 +264,7 @@ class AmateurTelsizIlanVitrini {
         wp_enqueue_script('ativ-core');
         wp_enqueue_script('ativ-ui');
         wp_enqueue_script('ativ-modal');
+        wp_enqueue_script('ativ-terms');
         
         ob_start();
         ?>
@@ -307,6 +309,7 @@ class AmateurTelsizIlanVitrini {
         wp_enqueue_script('ativ-core');
         wp_enqueue_script('ativ-ui');
         wp_enqueue_script('ativ-modal');
+        wp_enqueue_script('ativ-terms');
 
         ob_start();
         include ATIV_PLUGIN_PATH . 'templates/my-listings.php';
