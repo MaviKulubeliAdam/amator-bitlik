@@ -396,29 +396,171 @@
   }
 
   .detail-modal-content {
-    max-height: 100vh !important;
     height: 100vh !important;
     border-radius: 0 !important;
-  }
-
-  .detail-left-section {
-    padding: 24px 20px !important;
-  }
-
-  .detail-right-section {
-    padding: 24px 20px !important;
-    max-height: calc(100vh - 400px) !important;
-    overflow-y: auto !important;
+    display: block !important;
+    overflow-y: auto !important; /* tüm içerik birlikte kayar */
     -webkit-overflow-scrolling: touch !important;
   }
 
+  /* Mobilde sol bölüm gösterilsin; sticky değil, kompakt olsun */
+  .detail-left-section {
+    position: relative !important;
+    padding: 16px 16px !important;
+    height: auto !important;
+    border-radius: 0 !important;
+  }
+
+  .detail-right-section {
+    padding: 0 !important;
+    overflow: visible !important; /* kaydırmayı modal yapıyor */
+    height: auto !important;
+  }
+
+  /* Mobil için kompakt header */
+  .detail-header {
+    position: sticky !important;
+    top: 0 !important;
+    background: white !important;
+    z-index: 100 !important;
+    margin-bottom: 0 !important;
+    padding: 16px 20px !important;
+    border-bottom: 1px solid #e0e0e0 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
+  }
+
   .detail-header h2 {
-    font-size: 22px !important;
+    font-size: 18px !important;
+    line-height: 1.3 !important;
+  }
+
+  .detail-header .close-btn {
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 20px !important;
+  }
+
+  /* Mobil için thumbnail galeri */
+  .detail-sections {
+    padding: 0 !important;
+  }
+
+  /* Ana görsel alanı - kompakt */
+  .image-slider {
+    height: 220px !important;
+    border-radius: 0 !important;
+    margin-bottom: 8px !important;
+  }
+
+  /* Mobil için ürün özet kartı (görsel altında) */
+  .detail-card-preview {
+    display: block !important;
+    background: white !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    padding: 16px 20px !important;
+    border-bottom: 8px solid #f8f9fa !important;
+    margin-bottom: 0 !important;
+  }
+
+  .detail-card-preview:hover {
+    transform: none !important;
+  }
+
+  /* Mobilde ana görsel gösterilsin (kompakt) */
+  .detail-preview-image {
+    display: flex !important;
+    height: 180px !important;
+    font-size: 60px !important;
+  }
+  /* Mobilde özet başlık/fiyat/callsign bloklarını gizle (detaylarda var) */
+  .detail-preview-content {
+    display: none !important;
+  }
+
+
+  /* Eğer görsel özet kartının içindeyse gizlenmesin */
+  .detail-card-preview .detail-preview-image {
+    display: flex !important;
+  }
+
+  .detail-preview-content {
+    padding: 0 !important;
   }
 
   .detail-preview-title {
-    font-size: 18px !important;
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    color: #1a1a1a !important;
+    margin: 0 0 12px 0 !important;
+    line-height: 1.4 !important;
   }
+
+  /* Thumbnail galeri - horizontal scroll */
+  .thumbnails {
+    display: flex !important;
+    gap: 8px !important;
+    overflow-x: auto !important;
+    padding: 0 16px 12px 16px !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+  }
+
+  .thumbnails::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .thumbnail {
+    flex-shrink: 0 !important;
+    width: 60px !important;
+    height: 60px !important;
+    border-radius: 8px !important;
+  }
+
+  /* İçerik bölümleri */
+  .product-details,
+  .seller-section {
+    margin: 0 20px 16px 20px !important;
+    padding: 16px !important;
+    border-radius: 12px !important;
+  }
+
+  .product-details h3,
+  .seller-section h3 {
+    font-size: 16px !important;
+    margin-bottom: 12px !important;
+  }
+
+  .detail-description {
+    font-size: 14px !important;
+    line-height: 1.6 !important;
+  }
+
+  /* Mobil için özel fiyat kartı */
+  .detail-preview-price {
+    display: inline-block !important;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    color: white !important;
+    padding: 8px 16px !important;
+    border-radius: 8px !important;
+    font-size: 20px !important;
+    font-weight: 700 !important;
+    margin: 0 0 16px 0 !important;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3) !important;
+  }
+
+  .detail-preview-callsign {
+    display: inline-block !important;
+    background: #f8f9fa !important;
+    color: #667eea !important;
+    padding: 6px 12px !important;
+    border-radius: 6px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    margin: 0 0 16px 8px !important;
+    border: 1px solid #e0e0e0 !important;
+  }
+}
 
   .detail-preview-price {
     font-size: 24px !important;
@@ -431,18 +573,66 @@
 }
 
 @media (max-width: 480px) {
-  .detail-left-section {
-    padding: 20px 16px !important;
+  .detail-header {
+    padding: 12px 16px !important;
   }
 
-  .detail-right-section {
-    padding: 20px 16px !important;
-    max-height: calc(100vh - 350px) !important;
+  .detail-header h2 {
+    font-size: 16px !important;
   }
 
-  .detail-preview-image {
+  .detail-header .close-btn {
+    width: 28px !important;
+    height: 28px !important;
+    font-size: 18px !important;
+  }
+
+  .image-slider {
     height: 200px !important;
-    font-size: 80px !important;
+  }
+
+  .detail-card-preview {
+    padding: 12px 16px !important;
+  }
+
+  .detail-preview-title {
+    font-size: 15px !important;
+  }
+
+  .detail-preview-price {
+    font-size: 18px !important;
+    padding: 6px 12px !important;
+  }
+
+  .detail-preview-callsign {
+    font-size: 12px !important;
+    padding: 5px 10px !important;
+  }
+
+  .thumbnails {
+    padding: 0 16px 12px 16px !important;
+    gap: 6px !important;
+  }
+
+  .thumbnail {
+    width: 55px !important;
+    height: 55px !important;
+  }
+
+  .product-details,
+  .seller-section {
+    margin: 0 16px 12px 16px !important;
+    padding: 12px !important;
+  }
+
+  .product-details h3,
+  .seller-section h3 {
+    font-size: 15px !important;
+    margin-bottom: 10px !important;
+  }
+
+  .detail-description {
+    font-size: 13px !important;
   }
 }
 
@@ -1252,7 +1442,7 @@
     /* Mobil uyumluluk */
     @media (max-width: 768px) {
       .image-slider {
-        height: 300px;
+        height: 200px;
       }
       
       .slider-arrow {
@@ -1262,8 +1452,8 @@
       }
       
       .thumbnail {
-        width: 50px;
-        height: 50px;
+        width: 45px;
+        height: 45px;
       }
 
       .lightbox-arrow {
@@ -1292,6 +1482,23 @@
       .lightbox-counter {
         bottom: 20px;
         font-size: 16px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .image-slider {
+        height: 160px;
+      }
+      
+      .slider-arrow {
+        width: 32px;
+        height: 32px;
+        font-size: 14px;
+      }
+      
+      .thumbnail {
+        width: 40px;
+        height: 40px;
       }
     }
 
