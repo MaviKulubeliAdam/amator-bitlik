@@ -1249,6 +1249,33 @@ function openDetailPanel(listing) {
  * Detay bölümlerini oluşturur
  */
 function createDetailSections(listing) {
+  // Kontakt linkleri
+  const rawPhone = listing.seller_phone || '';
+  const digitsOnly = String(rawPhone).replace(/\D/g, '');
+  let waNumber = digitsOnly;
+  // Türkiye numaralarını normalize et: +90 / 90 / 0XXXXXXXXXX / XXXXXXXXXX
+  if (waNumber) {
+    if (waNumber.startsWith('0') && waNumber.length === 11) {
+      waNumber = '90' + waNumber.slice(1);
+    } else if (waNumber.length === 10) {
+      waNumber = '90' + waNumber;
+    } else if (waNumber.startsWith('90') && waNumber.length >= 12) {
+      // already includes country code; keep as is
+    } else if (waNumber.startsWith('90') && waNumber.length === 11) {
+      // edge: missing one digit; leave unchanged
+    } else {
+      // default: if starts with country code +90 was stripped to 90; ensure 90 prefix
+      if (!waNumber.startsWith('90')) {
+        waNumber = '90' + waNumber;
+      }
+    }
+  }
+  const msg = `Merhaba ${listing.seller_name || ''}, ${listing.title || 'ilanınız'} hakkında iletişime geçmek istiyorum.`;
+  const waLink = waNumber ? `https://wa.me/${waNumber}?text=${encodeURIComponent(msg)}` : '';
+  const mailSubject = `İlan Hk.: ${listing.title || ''}`;
+  const mailBody = `${msg}\n\nÇağrı İşareti: ${listing.callsign || ''}`;
+  const mailLink = listing.seller_email ? `mailto:${listing.seller_email}?subject=${encodeURIComponent(mailSubject)}&body=${encodeURIComponent(mailBody)}` : '';
+
   return `
     <div class="product-details">
       <h3>Ürün Bilgileri</h3>
@@ -1300,6 +1327,10 @@ function createDetailSections(listing) {
       <div class="detail-info">
         <div class="detail-label">Telefon</div>
         <div class="detail-value">${escapeHtml(listing.seller_phone)}</div>
+      </div>
+      <div class="detail-actions" style="display:flex; gap:12px; margin-top:16px; flex-wrap:wrap;">
+        ${waLink ? `<a href="${waLink}" target="_blank" rel="noopener" class="contact-btn whatsapp" style="display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border-radius:8px; background:#25D366; color:#fff; text-decoration:none; font-weight:600;">💬 WhatsApp'tan Yaz</a>` : ''}
+        ${mailLink ? `<a href="${mailLink}" class="contact-btn email" style="display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border-radius:8px; background:#667eea; color:#fff; text-decoration:none; font-weight:600;">✉️ E-posta Gönder</a>` : ''}
       </div>
     </div>
   `;
