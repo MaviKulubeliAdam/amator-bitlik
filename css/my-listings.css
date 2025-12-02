@@ -1,0 +1,243 @@
+/* My Listings Page Specific Styles */
+/* This file contains styles specific to the "My Listings" page to prevent conflicts with gallery page */
+
+/* Override controls layout for my-listings page */
+#ativ-container.my-listings-page .controls {
+  background: linear-gradient(135deg, #00349b 0%, #0051d5 100%);
+  padding: 24px 32px;
+  border-radius: 24px;
+  margin-bottom: 32px;
+  box-shadow: 0 12px 40px rgba(0, 52, 155, 0.4);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: nowrap;
+}
+
+#ativ-container.my-listings-page .controls > div:first-child {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+  flex: 1;
+}
+
+/* Dropdown filters for my-listings page */
+#ativ-container.my-listings-page .dropdown-filter {
+  position: relative;
+  min-width: 180px;
+  flex: 0 0 auto;
+}
+
+#ativ-container.my-listings-page .dropdown-button {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  text-align: left;
+  background: rgba(255, 255, 255, 0.95);
+  cursor: pointer;
+  padding: 14px 20px;
+  border: none;
+  border-radius: 50px;
+  font-size: 15px;
+  color: #1a1a1a;
+  transition: all 0.3s;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  font-weight: 500;
+}
+
+#ativ-container.my-listings-page .dropdown-button:hover {
+  background: white;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+#ativ-container.my-listings-page .dropdown-arrow {
+  font-size: 10px;
+  transition: transform 0.3s;
+  color: #666;
+  margin-left: 8px;
+}
+
+#ativ-container.my-listings-page .dropdown-filter.open .dropdown-arrow {
+  transform: rotate(180deg);
+}
+
+#ativ-container.my-listings-page .dropdown-menu {
+  position: absolute;
+  background: white;
+  border: none;
+  border-radius: 16px;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.2);
+  z-index: 100000;
+  display: none;
+  max-height: 320px;
+  overflow: hidden;
+  width: 100%;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+}
+
+#ativ-container.my-listings-page .dropdown-filter.open .dropdown-menu,
+#ativ-container.my-listings-page .dropdown-menu.active {
+  display: flex !important;
+  flex-direction: column;
+  animation: dropdownSlide 0.3s ease;
+}
+
+#ativ-container.my-listings-page .dropdown-options {
+  max-height: 280px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+#ativ-container.my-listings-page .dropdown-option {
+  padding: 14px 20px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  color: #1a1a1a;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 14px;
+  font-weight: 500;
+  position: relative;
+}
+
+#ativ-container.my-listings-page .dropdown-option:last-child {
+  border-bottom: none;
+}
+
+#ativ-container.my-listings-page .dropdown-option:hover {
+  background: linear-gradient(90deg, rgba(102, 126, 234, 0.08) 0%, transparent 100%);
+  color: #667eea;
+}
+
+#ativ-container.my-listings-page .dropdown-option.selected {
+  background: linear-gradient(90deg, rgba(102, 126, 234, 0.12) 0%, transparent 100%);
+  color: #667eea;
+  font-weight: 700;
+}
+
+#ativ-container.my-listings-page .dropdown-option.hidden {
+  display: none;
+}
+
+/* Add listing button on my-listings page */
+#ativ-container.my-listings-page .add-listing-btn {
+  padding: 14px 32px;
+  background: linear-gradient(135deg, #ffffff 0%, #e8f0ff 100%);
+  color: #00349b;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  border-radius: 50px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+  box-shadow: 0 6px 20px rgba(255, 255, 255, 0.3);
+  flex-shrink: 0;
+}
+
+#ativ-container.my-listings-page .add-listing-btn:hover {
+  background: linear-gradient(135deg, #ffffff 0%, #f5f9ff 100%);
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 12px 32px rgba(255, 255, 255, 0.5);
+  border-color: rgba(255, 255, 255, 0.8);
+}
+
+/* Listings list layout for my-listings page */
+#ativ-container.my-listings-page .listings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Responsive styles for my-listings page */
+@media (max-width: 1200px) {
+  #ativ-container.my-listings-page .dropdown-filter {
+    min-width: 160px;
+  }
+  
+  #ativ-container.my-listings-page .dropdown-button {
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 900px) {
+  #ativ-container.my-listings-page .controls {
+    flex-wrap: wrap;
+    padding: 20px 24px;
+  }
+  
+  #ativ-container.my-listings-page .dropdown-filter {
+    min-width: 140px;
+    flex: 1 1 auto;
+  }
+  
+  #ativ-container.my-listings-page .add-listing-btn {
+    width: 100%;
+    order: 999;
+    margin-top: 4px;
+  }
+}
+
+@media (max-width: 768px) {
+  #ativ-container.my-listings-page .controls {
+    padding: 20px 16px;
+    border-radius: 16px;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  
+  #ativ-container.my-listings-page .controls > div:first-child {
+    width: 100%;
+    gap: 10px;
+  }
+  
+  #ativ-container.my-listings-page .dropdown-filter {
+    width: calc(50% - 5px);
+    min-width: unset;
+    flex: 0 0 calc(50% - 5px);
+  }
+  
+  #ativ-container.my-listings-page .add-listing-btn {
+    width: 100%;
+    padding: 14px 20px;
+    font-size: 15px;
+  }
+  
+  #ativ-container.my-listings-page .dropdown-button {
+    padding: 12px 14px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  #ativ-container.my-listings-page .controls {
+    padding: 16px 12px;
+    gap: 8px;
+  }
+  
+  #ativ-container.my-listings-page .controls > div:first-child {
+    gap: 8px;
+  }
+  
+  #ativ-container.my-listings-page .dropdown-filter {
+    width: 100%;
+    flex: 0 0 100%;
+  }
+  
+  #ativ-container.my-listings-page .add-listing-btn {
+    padding: 14px 20px;
+    font-size: 14px;
+  }
+  
+  #ativ-container.my-listings-page .dropdown-button {
+    padding: 12px 14px;
+    font-size: 13px;
+  }
+}
