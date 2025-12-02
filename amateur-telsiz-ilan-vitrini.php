@@ -1,4 +1,50 @@
 <?php
+// Şehirler tablosu oluşturma ve doldurma
+register_activation_hook(__FILE__, function() {
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'amator_bitlik_sehirler';
+    $charset_collate = $wpdb->get_charset_collate();
+
+    $sql = "CREATE TABLE IF NOT EXISTS $table_name (
+        id BIGINT(20) unsigned NOT NULL AUTO_INCREMENT,
+        il_adi VARCHAR(100) NOT NULL,
+        ulke VARCHAR(100) NOT NULL DEFAULT 'Türkiye',
+        PRIMARY KEY (id),
+        UNIQUE KEY il_unique (il_adi)
+    ) $charset_collate;";
+
+    require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+    dbDelta($sql);
+
+    // Eğer tablo boşsa 81 ili ekle
+    $count = $wpdb->get_var("SELECT COUNT(*) FROM $table_name");
+    if ((int)$count === 0) {
+        $cities = [
+            'Adana','Adıyaman','Afyon','Ağrı','Aksaray','Amasya','Ankara','Antalya','Ardahan','Artvin','Aydın','Balıkesir','Bartın','Batman','Bayburt','Bilecik','Bingöl','Bitlis','Bolu','Burdur','Bursa','Çanakkale','Çankırı','Çorum','Denizli','Diyarbakır','Düzce','Edirne','Elazığ','Erzincan','Erzurum','Eskişehir','Gaziantep','Giresun','Gümüşhane','Hakkari','Hatay','Iğdır','Isparta','İstanbul','İzmir','Kahramanmaraş','Karabük','Karaman','Kars','Kastamonu','Kayseri','Kilis','Kırıkkale','Kırklareli','Kırşehir','Kocaeli','Konya','Kütahya','Malatya','Manisa','Mardin','Mersin','Muğla','Muş','Nevşehir','Niğde','Ordu','Osmaniye','Rize','Sakarya','Samsun','Şanlıurfa','Siirt','Sinop','Sivas','Şırnak','Tekirdağ','Tokat','Trabzon','Tunceli','Uşak','Van','Yalova','Yozgat','Zonguldak'
+        ];
+        foreach ($cities as $city) {
+            $wpdb->insert($table_name, [
+                'il_adi' => $city,
+                'ulke' => 'Türkiye'
+            ]);
+        }
+    }
+});
+
+// Şehirleri JSON dönen AJAX endpoint
+add_action('wp_ajax_ativ_get_cities', function() {
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'amator_bitlik_sehirler';
+    $rows = $wpdb->get_results("SELECT il_adi, ulke FROM $table_name ORDER BY il_adi ASC", ARRAY_A);
+    wp_send_json_success($rows ?: []);
+});
+add_action('wp_ajax_nopriv_ativ_get_cities', function() {
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'amator_bitlik_sehirler';
+    $rows = $wpdb->get_results("SELECT il_adi, ulke FROM $table_name ORDER BY il_adi ASC", ARRAY_A);
+    wp_send_json_success($rows ?: []);
+});
+
 /**
  * Plugin Name: Amatör Bitlik
  * Description: Amatör telsiz ekipmanları için ilan panosu yönetim sistemi

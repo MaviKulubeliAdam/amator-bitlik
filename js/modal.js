@@ -292,6 +292,9 @@ function openAddListingModal() {
   document.querySelector('.modal-header h2').textContent = 'Yeni İlan Ekle';
   document.getElementById('formSubmitBtn').textContent = 'İlanı Yayınla';
   updatePreview();
+  
+  // Şehir listesini yükle
+  loadCities();
 }
 
 /**
@@ -371,6 +374,9 @@ async function openEditListingModal(listingOrId) {
   document.getElementById('formSubmitBtn').textContent = submitBtnText;
 
   updatePreview();
+  
+  // Şehir listesini yükle
+  loadCities();
 }
 
 /**
@@ -1241,6 +1247,87 @@ function openDetailPanel(listing) {
   detailModal.addEventListener('click', (e) => {
     if (e.target.id === 'detailModal') {
       closeDetailPanel();
+    }
+  });
+}
+
+/**
+ * Şehir listesini yükle ve özel dropdown'a doldur
+ */
+let citiesData = [];
+
+function loadCities() {
+  try {
+    const ajaxUrl = (window.ajaxurl) || (window.ativAjaxUrl) || '/wp-admin/admin-ajax.php';
+    fetch(`${ajaxUrl}?action=ativ_get_cities`)
+      .then(r => r.json())
+      .then(json => {
+        if (!json || !json.success || !Array.isArray(json.data)) return;
+        citiesData = json.data;
+        setupCityDropdown();
+      })
+      .catch(() => {});
+  } catch (e) {}
+}
+
+function setupCityDropdown() {
+  const input = document.getElementById('formLocation');
+  const dropdown = document.getElementById('cityDropdown');
+  if (!input || !dropdown) return;
+
+  // Input'a yazınca filtreleme yap
+  input.addEventListener('input', function() {
+    const query = this.value.toLowerCase().trim();
+    if (!query) {
+      dropdown.classList.remove('active');
+      return;
+    }
+
+    const filtered = citiesData.filter(c => 
+      c.il_adi.toLowerCase().includes(query)
+    );
+
+    if (filtered.length === 0) {
+      dropdown.innerHTML = '<div class="city-dropdown-empty">Şehir bulunamadı</div>';
+      dropdown.classList.add('active');
+      return;
+    }
+
+    dropdown.innerHTML = filtered.map(c => 
+      `<div class="city-dropdown-item" data-city="${c.il_adi}">${c.il_adi}</div>`
+    ).join('');
+    dropdown.classList.add('active');
+
+    // Tıklama olaylarını ekle
+    dropdown.querySelectorAll('.city-dropdown-item').forEach(item => {
+      item.addEventListener('click', function() {
+        input.value = this.dataset.city;
+        dropdown.classList.remove('active');
+      });
+    });
+  });
+
+  // Input focus olunca tüm şehirleri göster
+  input.addEventListener('focus', function() {
+    if (citiesData.length > 0 && !this.value) {
+      dropdown.innerHTML = citiesData.map(c => 
+        `<div class="city-dropdown-item" data-city="${c.il_adi}">${c.il_adi}</div>`
+      ).join('');
+      dropdown.classList.add('active');
+
+      dropdown.querySelectorAll('.city-dropdown-item').forEach(item => {
+        item.addEventListener('click', function() {
+          input.value = this.dataset.city;
+          dropdown.classList.remove('active');
+        });
+      });
+    }
+  });
+
+  // Dışarı tıklayınca kapat
+  document.addEventListener('click', function(e) {
+    if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+      dropdown.classList.remove('active');
     }
   });
 }

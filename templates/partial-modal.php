@@ -38,7 +38,13 @@
      </div>
      <div class="form-group"><label for="formCallsign">Çağrı İşareti *</label> <input type="text" id="formCallsign" required placeholder="Örn: TA1ABC"></div>
      <div class="form-group"><label for="formSellerName">Ad Soyad *</label> <input type="text" id="formSellerName" required placeholder="Adınız ve soyadınız"></div>
-     <div class="form-group"><label for="formLocation">Konum *</label> <input type="text" id="formLocation" required placeholder="Örn: İstanbul, Kadıköy"></div>
+    <div class="form-group city-select-wrapper">
+      <label for="formLocation">Konum *</label>
+      <div class="city-select-container">
+        <input type="text" id="formLocation" required placeholder="Şehir seçin veya yazın..." autocomplete="off">
+        <div class="city-dropdown" id="cityDropdown"></div>
+      </div>
+    </div>
      <div class="form-group"><label for="formEmail">E-posta *</label> <input type="email" id="formEmail" required placeholder="ornek@email.com"></div>
      <div class="form-group"><label for="formPhone">Telefon *</label> <input type="tel" id="formPhone" required placeholder="0532 111 22 33"></div>
      <div class="form-group terms-group">
