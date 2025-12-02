@@ -1,0 +1,59 @@
+# Weblate configuration for Amatör Bitlik
+# https://docs.weblate.org/en/latest/admin/projects.html
+
+[weblate]
+# Component name
+name = Amatör Bitlik
+
+# File mask for translation files
+filemask = languages/amator-bitlik-*.po
+
+# Template for new translations
+new_base = languages/amator-bitlik.pot
+
+# Base file containing strings to translate
+template = languages/amator-bitlik.pot
+
+# File format
+file_format = po
+
+# Source language
+source_language = tr
+
+# Enable suggestions
+suggestion_voting = True
+suggestion_autoaccept = 0
+
+# Check flags
+check_flags = 
+
+# Translation license
+license = GPL-2.0-or-later
+
+# Project website
+web = https://github.com/MaviKulubeliAdam/amator-bitlik
+
+# VCS repository
+repo = https://github.com/MaviKulubeliAdam/amator-bitlik.git
+repoweb = https://github.com/MaviKulubeliAdam/amator-bitlik/blob/main/{{filename}}#L{{line}}
+
+# Push repository
+push = git@github.com:MaviKulubeliAdam/amator-bitlik.git
+
+# Branch
+branch = main
+
+# Auto-commit
+commit_message = i18n: Update translation files from Weblate
+
+# Language code style
+language_code_style = posix
+
+# Add new translations automatically
+new_lang = add
+
+# Intermediate language for machine translation
+intermediate_language = en
+
+# Enable glossary
+use_glossary = True

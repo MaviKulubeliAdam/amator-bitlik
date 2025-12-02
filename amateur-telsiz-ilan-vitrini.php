@@ -2,8 +2,10 @@
 /**
  * Plugin Name: Amatör Bitlik
  * Description: Amatör telsiz ekipmanları için ilan panosu yönetim sistemi
- * Version: 1.0
+ * Version: 1.1
  * Author: TA4AQG - Erkin Mercan
+ * Text Domain: amator-bitlik
+ * Domain Path: /languages
  */
 
 // Güvenlik kontrolü
@@ -20,6 +22,7 @@ define('ATIV_UPLOAD_URL', content_url() . '/plugins/amator-bitlik/uploads/');
 class AmateurTelsizIlanVitrini {
     
     public function __construct() {
+        add_action('plugins_loaded', array($this, 'load_textdomain'));
         add_action('init', array($this, 'init'));
         // CSS ve JS'i sadece shortcode kullanıldığında yükle
         add_shortcode('amator_telsiz_ilan', array($this, 'display_listings'));
@@ -33,6 +36,13 @@ class AmateurTelsizIlanVitrini {
         
         // Döviz kuru güncelleme hook'u
         add_action('ativ_update_exchange_rates', array($this, 'update_exchange_rates_from_api'));
+    }
+    
+    /**
+     * Çeviri dosyalarını yükle
+     */
+    public function load_textdomain() {
+        load_plugin_textdomain('amator-bitlik', false, dirname(plugin_basename(__FILE__)) . '/languages');
     }
     
     public function init() {
@@ -232,17 +242,18 @@ class AmateurTelsizIlanVitrini {
 }
     
    private function enqueue_scripts() {
-    // Modüler CSS dosyalarını kaydet (base, components, forms)
-    wp_register_style('ativ-base', ATIV_PLUGIN_URL . 'css/base.css', array(), '1.1');
-    wp_register_style('ativ-components', ATIV_PLUGIN_URL . 'css/components.css', array('ativ-base'), '1.1');
-    wp_register_style('ativ-forms', ATIV_PLUGIN_URL . 'css/forms.css', array('ativ-components'), '1.1');
+    // CSS dosyalarını kaydet ve yükle
+    wp_enqueue_style('ativ-base', ATIV_PLUGIN_URL . 'css/base.css', array(), '1.2');
+    wp_enqueue_style('ativ-components', ATIV_PLUGIN_URL . 'css/components.css', array('ativ-base'), '1.2');
+    wp_enqueue_style('ativ-forms', ATIV_PLUGIN_URL . 'css/forms.css', array('ativ-components'), '1.2');
     
-    // Modüler JS dosyalarını kaydet (core, modal, ui - sıralama önemli)
-    wp_register_script('ativ-core', ATIV_PLUGIN_URL . 'js/core.js', array('jquery'), '1.1', true);
-    wp_register_script('ativ-ui', ATIV_PLUGIN_URL . 'js/ui.js', array('ativ-core'), '1.1', true);
-    wp_register_script('ativ-modal', ATIV_PLUGIN_URL . 'js/modal.js', array('ativ-ui'), '1.1', true);
-    wp_register_script('ativ-terms', ATIV_PLUGIN_URL . 'js/terms.js', array('ativ-modal'), '1.0', true);
+    // JS dosyalarını kaydet ve yükle (sıralama önemli)
+    wp_enqueue_script('ativ-core', ATIV_PLUGIN_URL . 'js/core.js', array('jquery'), '1.2', true);
+    wp_enqueue_script('ativ-ui', ATIV_PLUGIN_URL . 'js/ui.js', array('ativ-core'), '1.2', true);
+    wp_enqueue_script('ativ-modal', ATIV_PLUGIN_URL . 'js/modal.js', array('ativ-ui'), '1.2', true);
+    wp_enqueue_script('ativ-terms', ATIV_PLUGIN_URL . 'js/terms.js', array('ativ-modal'), '1.2', true);
     
+    // AJAX parametrelerini JavaScript'e aktar
     $current_user_id = get_current_user_id();
     
     wp_localize_script('ativ-core', 'ativ_ajax', array(
@@ -251,20 +262,13 @@ class AmateurTelsizIlanVitrini {
         'public_nonce' => wp_create_nonce('ativ_public_nonce'),
         'upload_url' => ATIV_UPLOAD_URL,
         'is_user_logged_in' => is_user_logged_in(),
-        'user_id' => $current_user_id // Kullanıcı ID'sini front-end'e ilet
+        'user_id' => $current_user_id
     ));
 }
     
     public function display_listings() {
         // Script ve style'ları yükle
         $this->enqueue_scripts();
-        wp_enqueue_style('ativ-base');
-        wp_enqueue_style('ativ-components');
-        wp_enqueue_style('ativ-forms');
-        wp_enqueue_script('ativ-core');
-        wp_enqueue_script('ativ-ui');
-        wp_enqueue_script('ativ-modal');
-        wp_enqueue_script('ativ-terms');
         
         ob_start();
         ?>
@@ -303,13 +307,6 @@ class AmateurTelsizIlanVitrini {
 
         // Script ve style'ları yükle
         $this->enqueue_scripts();
-        wp_enqueue_style('ativ-base');
-        wp_enqueue_style('ativ-components');
-        wp_enqueue_style('ativ-forms');
-        wp_enqueue_script('ativ-core');
-        wp_enqueue_script('ativ-ui');
-        wp_enqueue_script('ativ-modal');
-        wp_enqueue_script('ativ-terms');
 
         ob_start();
         include ATIV_PLUGIN_PATH . 'templates/my-listings.php';

@@ -106,6 +106,40 @@ templates/
 	index.php
 	my-listings.php
 	partial-modal.php
+languages/
+	amator-bitlik.pot          # Çeviri şablon dosyası
+	amator-bitlik-tr_TR.po     # Türkçe çeviri
+	README.md                  # Çeviri dokümantasyonu
+```
+
+## Çoklu Dil Desteği
+
+Eklenti WordPress çeviri sistemi ile çoklu dil desteği sunmaktadır.
+
+### Ana Dil
+- **Türkçe (tr_TR)** - Varsayılan dil
+
+### Çeviri Dosyaları
+- Text Domain: `amator-bitlik`
+- Domain Path: `/languages`
+- Format: Gettext PO/MO
+
+### Weblate Entegrasyonu
+Proje Weblate çeviri yönetim sistemi ile entegre edilmiştir. Yeni diller eklemek ve çevirileri yönetmek için:
+
+1. Weblate'te proje oluşturun
+2. Dosya maskesi: `languages/amator-bitlik-*.po`
+3. Şablon dosyası: `languages/amator-bitlik.pot`
+
+Detaylı bilgi için `languages/README.md` dosyasına bakın.
+
+### MO Dosyası Oluşturma
+```bash
+# Tek dosya için
+msgfmt languages/amator-bitlik-tr_TR.po -o languages/amator-bitlik-tr_TR.mo
+
+# Tüm .po dosyaları için
+for file in languages/*.po; do msgfmt "$file" -o "${file%.po}.mo"; done
 ```
 
 ## Lisans

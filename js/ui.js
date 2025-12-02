@@ -325,6 +325,8 @@ function renderListings() {
   // my-listings sayfasında bu elementler mevcut değil
   if (!grid || !noResults || !paginationContainer) return;
 
+  console.log('[DEBUG] renderListings çağrıldı. Toplam ilan:', displayedListings.length);
+
   // Toplam sayfa sayısını hesapla
   totalPages = Math.ceil(displayedListings.length / itemsPerPage);
   
@@ -342,6 +344,12 @@ function renderListings() {
     grid.innerHTML = '';
     paginationContainer.innerHTML = '';
     noResults.style.display = 'block';
+    // Mesajı güncelle - filtrelere mi yoksa gerçekten ilan yok mu?
+    if (allListings.length === 0) {
+      noResults.textContent = 'Henüz onaylanmış ilan bulunmamaktadır. İlk ilanı siz ekleyin!';
+    } else {
+      noResults.textContent = 'Sonuç bulunamadı. Lütfen farklı bir arama veya filtre deneyin.';
+    }
     return;
   }
 
@@ -472,6 +480,7 @@ function createListingCard(listing) {
         <div class="listing-image">${displayImage}</div>
         <div class="listing-content">
           <h3 class="listing-title">${escapeHtml(listing.title)}</h3>
+          <p class="listing-brand-model">${escapeHtml(listing.brand)} ${escapeHtml(listing.model)}</p>
           <p class="listing-callsign">${escapeHtml(listing.callsign)}</p>
           <p class="listing-price">${currencySymbol}${escapeHtml(String(listing.price))} ${escapeHtml(listing.currency || 'TRY')}</p>
         </div>

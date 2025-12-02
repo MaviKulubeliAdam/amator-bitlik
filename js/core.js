@@ -130,8 +130,11 @@ async function apiCall(action, data = null) {
  */
 async function loadListings() {
   try {
+    console.log('[DEBUG] İlanlar yükleniyor...');
     const response = await apiCall('get_listings');
+    console.log('[DEBUG] API yanıtı:', response);
     allListings = response.data || [];
+    console.log('[DEBUG] Yüklenen ilan sayısı:', allListings.length);
     // Listeler yüklendikten sonra sıralamayı uygula
     allListings = sortListings(allListings, currentSort);
   } catch (error) {

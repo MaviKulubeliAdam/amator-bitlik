@@ -1,0 +1,48 @@
+# WordPress
+wp-config.php
+wp-content/uploads/
+wp-content/cache/
+wp-content/backup-db/
+wp-content/advanced-cache.php
+wp-content/wp-cache-config.php
+
+# Çeviri dosyaları - sadece .po ve .pot tutulacak
+*.mo
+*.mo~
+
+# IDE ve Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Composer
+vendor/
+
+# Logs
+*.log
+
+# Geçici dosyalar
+*.tmp
+*.temp
+.cache/
+
+# Upload dizini
+uploads/
+!uploads/.htaccess
+
+# Yedek dosyalar
+*.bak
+*.backup
+*~
+
+# OS
+Thumbs.db
+.DS_Store

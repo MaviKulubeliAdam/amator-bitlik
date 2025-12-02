@@ -1,0 +1,446 @@
+# Turkish translation for Amatör Bitlik
+# Copyright (C) 2025 Amatör Bitlik
+# This file is distributed under the same license as the Amatör Bitlik plugin.
+msgid ""
+msgstr ""
+"Project-Id-Version: Amatör Bitlik 1.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/amator-bitlik\n"
+"POT-Creation-Date: 2025-12-02 12:00+0000\n"
+"PO-Revision-Date: 2025-12-02 12:00+0300\n"
+"Last-Translator: TA4AQG - Erkin Mercan\n"
+"Language-Team: Turkish\n"
+"Language: tr_TR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"X-Generator: Poedit 3.0\n"
+
+#: amateur-telsiz-ilan-vitrini.php:3
+msgid "Amatör Bitlik"
+msgstr "Amatör Bitlik"
+
+#: amateur-telsiz-ilan-vitrini.php:4
+msgid "Amatör telsiz ekipmanları için ilan panosu yönetim sistemi"
+msgstr "Amatör telsiz ekipmanları için ilan panosu yönetim sistemi"
+
+#: amateur-telsiz-ilan-vitrini.php:6
+msgid "TA4AQG - Erkin Mercan"
+msgstr "TA4AQG - Erkin Mercan"
+
+msgid "Her 6 Saat"
+msgstr "Her 6 Saat"
+
+msgid "Yeni İlan Ekle"
+msgstr "Yeni İlan Ekle"
+
+msgid "İlan Başlığı"
+msgstr "İlan Başlığı"
+
+msgid "Kategori"
+msgstr "Kategori"
+
+msgid "Kategori seçin"
+msgstr "Kategori seçin"
+
+msgid "Telsiz"
+msgstr "Telsiz"
+
+msgid "Anten"
+msgstr "Anten"
+
+msgid "Amplifikatör"
+msgstr "Amplifikatör"
+
+msgid "Aksesuar"
+msgstr "Aksesuar"
+
+msgid "Diğer"
+msgstr "Diğer"
+
+msgid "Marka"
+msgstr "Marka"
+
+msgid "Model"
+msgstr "Model"
+
+msgid "Durum"
+msgstr "Durum"
+
+msgid "Durum seçin"
+msgstr "Durum seçin"
+
+msgid "Sıfır"
+msgstr "Sıfır"
+
+msgid "Kullanılmış"
+msgstr "Kullanılmış"
+
+msgid "Arızalı"
+msgstr "Arızalı"
+
+msgid "Fiyat"
+msgstr "Fiyat"
+
+msgid "Açıklama"
+msgstr "Açıklama"
+
+msgid "Ürün Görselleri (Maksimum 5 adet)"
+msgstr "Ürün Görselleri (Maksimum 5 adet)"
+
+msgid "Görselleri seçin veya sürükleyin"
+msgstr "Görselleri seçin veya sürükleyin"
+
+msgid "PNG, JPG, JPEG (Max 5 dosya)"
+msgstr "PNG, JPG, JPEG (Maks 5 dosya)"
+
+msgid "Çağrı İşareti"
+msgstr "Çağrı İşareti"
+
+msgid "Ad Soyad"
+msgstr "Ad Soyad"
+
+msgid "Konum"
+msgstr "Konum"
+
+msgid "E-posta"
+msgstr "E-posta"
+
+msgid "Telefon"
+msgstr "Telefon"
+
+msgid "İptal"
+msgstr "İptal"
+
+msgid "İlanı Yayınla"
+msgstr "İlanı Yayınla"
+
+msgid "Kullanım Sözleşmesi ve KVKK Aydınlatma Metni"
+msgstr "Kullanım Sözleşmesi ve KVKK Aydınlatma Metni"
+
+msgid "Benim İlanlarım"
+msgstr "Benim İlanlarım"
+
+msgid "Kendi yayınladığınız ilanların listesi"
+msgstr "Kendi yayınladığınız ilanların listesi"
+
+msgid "💰 Fiyat"
+msgstr "💰 Fiyat"
+
+msgid "Fiyat: Düşükten Yükseğe"
+msgstr "Fiyat: Düşükten Yükseğe"
+
+msgid "Fiyat: Yüksekten Düşüğe"
+msgstr "Fiyat: Yüksekten Düşüğe"
+
+msgid "📋 Tüm Durumlar"
+msgstr "📋 Tüm Durumlar"
+
+msgid "✅ Onaylı"
+msgstr "✅ Onaylı"
+
+msgid "⏳ Onay Bekleyen"
+msgstr "⏳ Onay Bekleyen"
+
+msgid "❌ Reddedilen"
+msgstr "❌ Reddedilen"
+
+msgid "📅 Tarih"
+msgstr "📅 Tarih"
+
+msgid "Yeniden Eskiye"
+msgstr "Yeniden Eskiye"
+
+msgid "Eskiden Yeniye"
+msgstr "Eskiden Yeniye"
+
+msgid "+ Yeni İlan"
+msgstr "+ Yeni İlan"
+
+msgid "Henüz ilanınız yok."
+msgstr "Henüz ilanınız yok."
+
+msgid "Düzenle"
+msgstr "Düzenle"
+
+msgid "Sil"
+msgstr "Sil"
+
+msgid "Red Nedeni:"
+msgstr "Red Nedeni:"
+
+msgid "Neden belirtilmemiş"
+msgstr "Neden belirtilmemiş"
+
+msgid "İlanınızı düzenleyip tekrar gönderin."
+msgstr "İlanınızı düzenleyip tekrar gönderin."
+
+msgid "Yönetici incelemesinde..."
+msgstr "Yönetici incelemesinde..."
+
+msgid "İlanınızı düzenleyebilirsiniz."
+msgstr "İlanınızı düzenleyebilirsiniz."
+
+msgid "Ürün Açıklaması"
+msgstr "Ürün Açıklaması"
+
+msgid "Satıcı Bilgileri"
+msgstr "Satıcı Bilgileri"
+
+msgid "İlan Galerisi"
+msgstr "İlan Galerisi"
+
+msgid "Tüm amatör telsiz ilanları"
+msgstr "Tüm amatör telsiz ilanları"
+
+msgid "🔍 İlan Ara..."
+msgstr "🔍 İlan Ara..."
+
+msgid "📁 Kategori"
+msgstr "📁 Kategori"
+
+msgid "Tümü"
+msgstr "Tümü"
+
+msgid "💵 Fiyat Aralığı"
+msgstr "💵 Fiyat Aralığı"
+
+msgid "📍 Konum"
+msgstr "📍 Konum"
+
+msgid "🔄 Sıralama"
+msgstr "🔄 Sıralama"
+
+msgid "Önerilenler"
+msgstr "Önerilenler"
+
+msgid "Son Eklenen"
+msgstr "Son Eklenen"
+
+msgid "İlk Eklenen"
+msgstr "İlk Eklenen"
+
+msgid "Ucuzdan Pahalıya"
+msgstr "Ucuzdan Pahalıya"
+
+msgid "Pahalıdan Ucuza"
+msgstr "Pahalıdan Ucuza"
+
+msgid "Sonuç bulunamadı"
+msgstr "Sonuç bulunamadı"
+
+msgid "Daha Fazla Göster"
+msgstr "Daha Fazla Göster"
+
+msgid "Kapat"
+msgstr "Kapat"
+
+msgid "İletişim Bilgileri"
+msgstr "İletişim Bilgileri"
+
+msgid "Satıcı İletişim Bilgileri"
+msgstr "Satıcı İletişim Bilgileri"
+
+msgid "Detaylar"
+msgstr "Detaylar"
+
+msgid "Ürün Detayları"
+msgstr "Ürün Detayları"
+
+msgid "Okudum, kabul ediyorum."
+msgstr "Okudum, kabul ediyorum."
+
+msgid "Yayınlanma"
+msgstr "Yayınlanma"
+
+msgid "Görüntüleme Sayısı"
+msgstr "Görüntüleme Sayısı"
+
+msgid "görüntüleme"
+msgstr "görüntüleme"
+
+msgid "Son Güncelleme"
+msgstr "Son Güncelleme"
+
+msgid "İlanlar"
+msgstr "İlanlar"
+
+msgid "Tüm İlanlar"
+msgstr "Tüm İlanlar"
+
+msgid "Onay Bekleyen İlanlar"
+msgstr "Onay Bekleyen İlanlar"
+
+msgid "Reddedilen İlanlar"
+msgstr "Reddedilen İlanlar"
+
+msgid "İlan Ekle"
+msgstr "İlan Ekle"
+
+msgid "Ayarlar"
+msgstr "Ayarlar"
+
+msgid "Döviz Kurları"
+msgstr "Döviz Kurları"
+
+msgid "Test E-postası Gönder"
+msgstr "Test E-postası Gönder"
+
+msgid "E-posta Ayarları"
+msgstr "E-posta Ayarları"
+
+msgid "Kaydet"
+msgstr "Kaydet"
+
+msgid "Onay Bekliyor"
+msgstr "Onay Bekliyor"
+
+msgid "Onayla"
+msgstr "Onayla"
+
+msgid "Reddet"
+msgstr "Reddet"
+
+msgid "Görüntüle"
+msgstr "Görüntüle"
+
+msgid "İlan Durumu"
+msgstr "İlan Durumu"
+
+msgid "Onaylandı"
+msgstr "Onaylandı"
+
+msgid "Reddedildi"
+msgstr "Reddedildi"
+
+msgid "Beklemede"
+msgstr "Beklemede"
+
+msgid "İlan başarıyla eklendi ve onay için gönderildi."
+msgstr "İlan başarıyla eklendi ve onay için gönderildi."
+
+msgid "İlan başarıyla güncellendi."
+msgstr "İlan başarıyla güncellendi."
+
+msgid "İlan başarıyla silindi."
+msgstr "İlan başarıyla silindi."
+
+msgid "İlan başarıyla onaylandı."
+msgstr "İlan başarıyla onaylandı."
+
+msgid "İlan başarıyla reddedildi."
+msgstr "İlan başarıyla reddedildi."
+
+msgid "Lütfen tüm alanları doldurun."
+msgstr "Lütfen tüm alanları doldurun."
+
+msgid "Geçersiz istek."
+msgstr "Geçersiz istek."
+
+msgid "Bu işlem için yetkiniz yok."
+msgstr "Bu işlem için yetkiniz yok."
+
+msgid "İlan bulunamadı."
+msgstr "İlan bulunamadı."
+
+msgid "Bir hata oluştu. Lütfen tekrar deneyin."
+msgstr "Bir hata oluştu. Lütfen tekrar deneyin."
+
+msgid "Dosya yüklenirken bir hata oluştu."
+msgstr "Dosya yüklenirken bir hata oluştu."
+
+msgid "Sadece resim dosyaları yüklenebilir (JPG, PNG, JPEG)."
+msgstr "Sadece resim dosyaları yüklenebilir (JPG, PNG, JPEG)."
+
+msgid "Maksimum 5 resim yükleyebilirsiniz."
+msgstr "Maksimum 5 resim yükleyebilirsiniz."
+
+msgid "Resim boyutu çok büyük. Maksimum 5MB."
+msgstr "Resim boyutu çok büyük. Maksimum 5MB."
+
+msgid "E-posta adresi geçerli değil."
+msgstr "E-posta adresi geçerli değil."
+
+msgid "Telefon numarası geçerli değil."
+msgstr "Telefon numarası geçerli değil."
+
+msgid "Çağrı işareti geçerli değil."
+msgstr "Çağrı işareti geçerli değil."
+
+msgid "Fiyat 0'dan büyük olmalıdır."
+msgstr "Fiyat 0'dan büyük olmalıdır."
+
+msgid "Lütfen kullanım koşullarını kabul edin."
+msgstr "Lütfen kullanım koşullarını kabul edin."
+
+msgid "Ara"
+msgstr "Ara"
+
+msgid "Filtrele"
+msgstr "Filtrele"
+
+msgid "Sıfırla"
+msgstr "Sıfırla"
+
+msgid "Tümünü Seç"
+msgstr "Tümünü Seç"
+
+msgid "Seçimi Temizle"
+msgstr "Seçimi Temizle"
+
+msgid "seçili"
+msgstr "seçili"
+
+msgid "Arama sonucu bulunamadı."
+msgstr "Arama sonucu bulunamadı."
+
+msgid "Yükleniyor..."
+msgstr "Yükleniyor..."
+
+msgid "İşleminiz gerçekleştiriliyor..."
+msgstr "İşleminiz gerçekleştiriliyor..."
+
+msgid "Lütfen bekleyin..."
+msgstr "Lütfen bekleyin..."
+
+msgid "Başarılı!"
+msgstr "Başarılı!"
+
+msgid "Hata!"
+msgstr "Hata!"
+
+msgid "Uyarı!"
+msgstr "Uyarı!"
+
+msgid "Bilgi"
+msgstr "Bilgi"
+
+msgid "Evet"
+msgstr "Evet"
+
+msgid "Hayır"
+msgstr "Hayır"
+
+msgid "Vazgeç"
+msgstr "Vazgeç"
+
+msgid "Tamam"
+msgstr "Tamam"
+
+msgid "Devam"
+msgstr "Devam"
+
+msgid "Geri"
+msgstr "Geri"
+
+msgid "İleri"
+msgstr "İleri"
+
+msgid "Bu işlemi yapmak istediğinizden emin misiniz?"
+msgstr "Bu işlemi yapmak istediğinizden emin misiniz?"
+
+msgid "Bu ilan silinecek. Onaylıyor musunuz?"
+msgstr "Bu ilan silinecek. Onaylıyor musunuz?"
+
+msgid "Değişiklikler kaydedilmedi. Sayfadan çıkmak istediğinizden emin misiniz?"
+msgstr "Değişiklikler kaydedilmedi. Sayfadan çıkmak istediğinizden emin misiniz?"
