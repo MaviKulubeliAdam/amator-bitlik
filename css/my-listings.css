@@ -61,8 +61,13 @@
   margin-left: 8px;
 }
 
-#ativ-container.my-listings-page .dropdown-filter.open .dropdown-arrow,
-#ativ-container.my-listings-page .dropdown-menu.active ~ .dropdown-button .dropdown-arrow {
+/* Rotate arrow when dropdown menu is active (for my-listings dropdowns) */
+#ativ-container.my-listings-page .dropdown-filter:has(.dropdown-menu.active) .dropdown-arrow {
+  transform: rotate(180deg);
+}
+
+/* Fallback for browsers that don't support :has() */
+#ativ-container.my-listings-page .dropdown-filter.open .dropdown-arrow {
   transform: rotate(180deg);
 }
 
@@ -82,8 +87,9 @@
   right: 0;
 }
 
-#ativ-container.my-listings-page .dropdown-filter.open .dropdown-menu,
-#ativ-container.my-listings-page .dropdown-menu.active {
+/* Show dropdown menu when active (for my-listings) or when parent has open class (for compatibility) */
+#ativ-container.my-listings-page .dropdown-menu.active,
+#ativ-container.my-listings-page .dropdown-filter.open .dropdown-menu {
   display: flex !important;
   flex-direction: column;
   animation: dropdownSlide 0.3s ease;
