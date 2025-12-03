@@ -465,11 +465,31 @@ function createListingCard(listing) {
 
     const currencySymbol = getCurrencySymbol(listing.currency || 'TRY');
 
+    // İndirim badge'i - old_price varsa göster
+    let discountBadge = '';
+    if (listing.old_price && listing.discount_percent > 0) {
+        discountBadge = `<div class="discount-badge">%${listing.discount_percent} İndirim</div>`;
+    }
+
+    // Fiyat gösterimi - old_price varsa üstü çizili göster
+    let priceHtml = '';
+    if (listing.old_price && listing.discount_percent > 0) {
+        priceHtml = `
+            <p class="listing-price">
+                <span class="old-price">${currencySymbol}${escapeHtml(String(listing.old_price))}</span>
+                <span class="new-price">${currencySymbol}${escapeHtml(String(listing.price))} ${escapeHtml(listing.currency || 'TRY')}</span>
+            </p>
+        `;
+    } else {
+        priceHtml = `<p class="listing-price">${currencySymbol}${escapeHtml(String(listing.price))} ${escapeHtml(listing.currency || 'TRY')}</p>`;
+    }
+
     // Kullanıcı kontrolü - user_id'ye göre
     const isMyListing = ativ_ajax.user_id && listing.user_id == ativ_ajax.user_id;
 
     card.innerHTML = `
         ${isMyListing ? '<div class="my-listings-badge">Benim İlanım</div>' : ''}
+        ${discountBadge}
         ${imageCountBadge}
         ${isMyListing && pageType === 'my-listings' ? `
           <div class="listing-actions">
@@ -482,7 +502,7 @@ function createListingCard(listing) {
           <h3 class="listing-title">${escapeHtml(listing.title)}</h3>
           <p class="listing-brand-model">${escapeHtml(listing.brand)} ${escapeHtml(listing.model)}</p>
           <p class="listing-callsign">${escapeHtml(listing.callsign)}</p>
-          <p class="listing-price">${currencySymbol}${escapeHtml(String(listing.price))} ${escapeHtml(listing.currency || 'TRY')}</p>
+          ${priceHtml}
         </div>
       `;
 

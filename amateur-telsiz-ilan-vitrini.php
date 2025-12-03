@@ -203,6 +203,7 @@ class AmateurTelsizIlanVitrini {
         model varchar(100) NOT NULL,
         `condition` enum('Sıfır', 'Kullanılmış', 'Arızalı') NOT NULL,
         price decimal(10,2) NOT NULL,
+        old_price decimal(10,2) DEFAULT NULL,
         currency enum('TRY', 'USD', 'EUR') DEFAULT 'TRY',
         description longtext NOT NULL,
         images longtext,
@@ -327,6 +328,9 @@ class AmateurTelsizIlanVitrini {
     public function display_listings() {
         // Script ve style'ları yükle
         $this->enqueue_scripts();
+        
+        // Kullanıcı sözleşmesi metnini veritabanından çek
+        $ativ_terms_content = $this->get_template_body('user_terms', 'user_terms');
         
         ob_start();
         ?>
@@ -591,6 +595,15 @@ class AmateurTelsizIlanVitrini {
         
         // Fiyatı TL'ye dönüştür (filtreleme için)
         $listing['price_in_tl'] = $this->convert_to_tl($listing['price'], $listing['currency']);
+        
+        // old_price varsa TL'ye çevir ve indirim yüzdesini hesapla
+        if (!empty($listing['old_price']) && floatval($listing['old_price']) > floatval($listing['price'])) {
+            $listing['old_price_in_tl'] = $this->convert_to_tl($listing['old_price'], $listing['currency']);
+            $listing['discount_percent'] = round((($listing['old_price'] - $listing['price']) / $listing['old_price']) * 100);
+        } else {
+            $listing['old_price'] = null;
+            $listing['discount_percent'] = 0;
+        }
     }
     
     wp_send_json_success($listings);
@@ -621,6 +634,15 @@ class AmateurTelsizIlanVitrini {
             
             // Fiyatı TL'ye dönüştür (filtreleme için)
             $listing['price_in_tl'] = $this->convert_to_tl($listing['price'], $listing['currency']);
+            
+            // old_price varsa TL'ye çevir ve indirim yüzdesini hesapla
+            if (!empty($listing['old_price']) && floatval($listing['old_price']) > floatval($listing['price'])) {
+                $listing['old_price_in_tl'] = $this->convert_to_tl($listing['old_price'], $listing['currency']);
+                $listing['discount_percent'] = round((($listing['old_price'] - $listing['price']) / $listing['old_price']) * 100);
+            } else {
+                $listing['old_price'] = null;
+                $listing['discount_percent'] = 0;
+            }
         }
 
         wp_send_json_success($listings);
@@ -940,7 +962,30 @@ class AmateurTelsizIlanVitrini {
         $update_data['seller_email'] = sanitize_email($data['seller_email']);
     }
     if (array_key_exists('price', $data)) {
-        $update_data['price'] = floatval($data['price']);
+        $new_price = floatval($data['price']);
+        $old_listing_full = $wpdb->get_row($wpdb->prepare("SELECT price, old_price FROM $table_name WHERE id = %d", $id), ARRAY_A);
+        
+        if ($old_listing_full) {
+            $current_price = floatval($old_listing_full['price']);
+            $stored_old_price = $old_listing_full['old_price'] ? floatval($old_listing_full['old_price']) : null;
+            
+            if ($new_price < $current_price) {
+                // Fiyat düştü: mevcut fiyatı old_price olarak sakla (eğer zaten old_price yoksa)
+                if (!$stored_old_price) {
+                    $update_data['old_price'] = $current_price;
+                }
+                // Eğer zaten old_price varsa ve yeni fiyat old_price'dan küçükse old_price'ı koru
+                // Eğer yeni fiyat old_price'a eşitse veya büyükse old_price'ı temizle
+                elseif ($new_price >= $stored_old_price) {
+                    $update_data['old_price'] = null;
+                }
+            } elseif ($new_price >= $current_price) {
+                // Fiyat arttı veya aynı kaldı: old_price'ı temizle (indirim sona erdi)
+                $update_data['old_price'] = null;
+            }
+        }
+        
+        $update_data['price'] = $new_price;
     }
     if (array_key_exists('description', $data)) {
         $update_data['description'] = sanitize_textarea_field($data['description']);
@@ -1028,9 +1073,40 @@ class AmateurTelsizIlanVitrini {
         $update_data['rejection_reason'] = null;
         $was_rejected = true;
     } elseif (!empty($existing_listing['status']) && $existing_listing['status'] === 'approved') {
-        // Onaylı ilan düzenleniyorsa tekrar pending'e dönüştür
-        $update_data['status'] = 'pending';
-        $was_approved = true;
+        // Onaylı ilan düzenleniyorsa: sadece fiyat/para birimi değiştiyse otomatik onayla
+        // Diğer alanlar değiştiyse pending'e dönüştür
+        
+        // Mevcut değerleri al
+        $old_listing = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_name WHERE id = %d", $id), ARRAY_A);
+        
+        // Kritik alanları kontrol et (fiyat ve para birimi HARİÇ)
+        $critical_fields = ['title', 'description', 'category', 'brand', 'model', 'condition', 
+                           'callsign', 'seller_name', 'location', 'seller_phone', 'seller_email'];
+        
+        $has_critical_change = false;
+        foreach ($critical_fields as $field) {
+            if (isset($update_data[$field]) && $update_data[$field] != $old_listing[$field]) {
+                $has_critical_change = true;
+                break;
+            }
+        }
+        
+        // Görseller değiştiyse de kritik sayılır
+        if (isset($update_data['images']) && $update_data['images'] != $old_listing['images']) {
+            $has_critical_change = true;
+        }
+        
+        // Emoji değiştiyse kritik sayılır
+        if (isset($update_data['emoji']) && $update_data['emoji'] != $old_listing['emoji']) {
+            $has_critical_change = true;
+        }
+        
+        if ($has_critical_change) {
+            // Kritik alan değişmişse yeniden onay gerekli
+            $update_data['status'] = 'pending';
+            $was_approved = true;
+        }
+        // Sadece price/currency değiştiyse status değişmeden kalır (approved)
     }
 
     // Değişecek veri yoksa başarı döndür (no-op)
@@ -2696,6 +2772,10 @@ class AmateurTelsizIlanVitrini {
                 'admin_listing_updated' => array(
                     'name' => 'Yöneticiye İlan Güncelleme Bildirimi',
                     'body' => sanitize_textarea_field($_POST['mail_template_admin_listing_updated'] ?? '')
+                ),
+                'user_terms' => array(
+                    'name' => 'Kullanıcı Sözleşmesi',
+                    'body' => wp_kses_post($_POST['ativ_terms_text'] ?? '')
                 )
             );
             
@@ -2754,6 +2834,9 @@ class AmateurTelsizIlanVitrini {
         $cities_table = $wpdb->prefix . 'amator_bitlik_sehirler';
         $ativ_countries = $wpdb->get_col("SELECT DISTINCT ulke FROM $cities_table ORDER BY ulke ASC");
         $ativ_current_country = get_option('ativ_location_country', 'all');
+
+        // Kullanıcı sözleşmesi metni (şablonlar tablosundan)
+        $ativ_terms_text = $this->get_template_body('user_terms', 'user_terms');
         
         ?>
         <div class="wrap ativ-settings-wrap">
@@ -2971,6 +3054,7 @@ class AmateurTelsizIlanVitrini {
                     <button type="button" class="ativ-settings-tab active" onclick="switchTab(event, 'smtp')">📧 SMTP Ayarları</button>
                     <button type="button" class="ativ-settings-tab" onclick="switchTab(event, 'templates')">📝 Mail Şablonları</button>
                     <button type="button" class="ativ-settings-tab" onclick="switchTab(event, 'localization')">🌍 Lokalizasyon</button>
+                    <button type="button" class="ativ-settings-tab" onclick="switchTab(event, 'terms')">📜 Kullanıcı Sözleşmesi</button>
                     <button type="button" class="ativ-settings-tab" onclick="switchTab(event, 'debug')">🔧 Debug & Cron</button>
                 </div>
                 
@@ -3115,6 +3199,22 @@ class AmateurTelsizIlanVitrini {
                             <?php } } ?>
                         </select>
                         <p class="description">Seçilen ülke, ilan formundaki şehir arama listesinde filtrelenir.</p>
+                    </div>
+                </div>
+
+                <!-- Kullanıcı Sözleşmesi Sekmesi -->
+                <div id="terms" class="ativ-settings-content">
+                    <h2>📜 Kullanıcı Sözleşmesi</h2>
+                    <p>İlan formu gönderilmeden önce kullanıcıların kabul edeceği sözleşme metni.</p>
+
+                    <div class="ativ-info-box">
+                        💡 <strong>İpucu:</strong> Bu metin, ilan ekleme formunda onay kutusu ile gösterilir. HTML etiketleri kullanabilirsiniz.
+                    </div>
+
+                    <div class="ativ-form-group">
+                        <label for="ativ_terms_text">Sözleşme Metni</label>
+                        <textarea id="ativ_terms_text" name="ativ_terms_text" rows="12" style="font-family: inherit; font-size: 14px; line-height: 1.6;"><?php echo esc_textarea($ativ_terms_text); ?></textarea>
+                        <p class="description">İlan formunda gösterilecek kullanıcı sözleşmesi metni. Basit HTML etiketleri desteklenir.</p>
                     </div>
                 </div>
 
@@ -3698,6 +3798,107 @@ Sorularınız için lütfen {admin_email} adresine yazın.
 
 Saygılarımızla,
 Amatör Bitlik Ekibi
+EOT,
+            'user_terms' => <<<'EOT'
+<p style="text-align: center; font-weight: 600; color: #667eea; margin-bottom: 24px;">Son Güncelleme: 1 Aralık 2025</p>
+
+<h3>1. TARAFLAR VE KONU</h3>
+<p>İşbu sözleşme, Amatör Telsiz İlan Vitrini ("Platform") üzerinden ilan yayınlayan veya Platform'a erişen tüm kullanıcılar ("Kullanıcı") ile Platform yöneticisi arasında düzenlenmiştir.</p>
+<p>Platform'a erişen, kullanan veya ilan oluşturan her kullanıcı, işbu sözleşmenin tamamını okumuş, anlamış ve tüm hükümleri kabul etmiş sayılır.</p>
+
+<h3>2. PLATFORMUN HUKUKİ STATÜSÜ VE SORUMLULUKLARI</h3>
+<p><strong>2.1. Yer Sağlayıcı Statüsü</strong></p>
+<p>Platform, 5651 sayılı Kanun kapsamında <strong>"yer sağlayıcı"</strong>dır. Kullanıcı tarafından oluşturulan içeriklerin doğruluğunu, yasallığını veya güvenilirliğini denetleme yükümlülüğü yoktur.</p>
+
+<p><strong>2.2. Aracı Değildir</strong></p>
+<p>Platform, kullanıcılar arasında gerçekleşen satış, alış, takas, teslimat veya pazarlık süreçlerinde hiçbir şekilde taraf veya aracı değildir.</p>
+
+<p><strong>2.3. Garanti Verilmez</strong></p>
+<p>Platform; ürünlerin doğruluğunu, ürünün niteliğini, kullanıcıların kimliğini veya güvenilirliğini, ilan içeriklerinin doğruluğunu garanti etmez.</p>
+
+<p><strong>2.4. Sorumluluk Reddi</strong></p>
+<p>Platform; dolandırıcılık, sahtecilik, ödeme problemleri, ürün teslim edilmemesi, hasarlı ürün gönderimi dahil olmak üzere alıcı ve satıcı arasındaki hiçbir işlemden sorumlu değildir.</p>
+
+<p><strong>2.5. İlan Onaylama Yetkisi</strong></p>
+<p>Platform, uygun görmediği ilanları onaylama, düzenleme talep etme, reddetme veya kaldırma hakkını saklı tutar.</p>
+
+<h3>3. KULLANICI YÜKÜMLÜLÜKLERİ</h3>
+<p><strong>3.1. İlan İçeriği Kullanıcıya Aittir</strong></p>
+<p>Kullanıcı, paylaştığı tüm içeriklerden (açıklama, fotoğraf, fiyat, iletişim bilgisi, çağrı işareti vb.) bizzat sorumludur.</p>
+
+<p><strong>3.2. Ürünlerin Yasallığı</strong></p>
+<p>İlan verilen ürünün yasallığı, lisans gerektirip gerektirmediği, teknik özellikleri, kullanımında doğabilecek tüm hukuki sonuçlar yalnızca kullanıcıya aittir.</p>
+
+<p><strong>3.3. Yasal Sorumluluk</strong></p>
+<p>Kullanıcı, Platform'u kullanırken yürürlükteki tüm mevzuata uygun davranmayı kabul eder. Hukuka aykırı işlem yapılması hâlinde doğacak cezaî ve hukukî sorumluluk tamamen kullanıcıya aittir.</p>
+
+<p><strong>3.4. Yanlış veya Yanıltıcı Bilgi Paylaşmama</strong></p>
+<p>Kullanıcı, yanlış, eksik veya aldatıcı bilgi paylaşmayacağını taahhüt eder.</p>
+
+<p><strong>3.5. Üçüncü Kişi Haklarının Korunması</strong></p>
+<p>Kullanıcı, üçüncü kişilerin marka, telif, patent gibi haklarını ihlal eden içerik paylaşamaz.</p>
+
+<h3>4. ALIM-SATIM VE İŞLEM SÜREÇLERİ</h3>
+<p><strong>4.1. Platform Aracı Değildir</strong></p>
+<p>Ödeme, pazarlık, teslimat, ürün kontrolü ve iade süreçleri tamamen alıcı ve satıcı arasındadır.</p>
+
+<p><strong>4.2. Dış Kanallar Üzerinden İletişim</strong></p>
+<p>Kullanıcılar WhatsApp, telefon, e-posta veya diğer dış iletişim kanallarını kullanarak kendi aralarında iletişim kurar. Bu iletişimlerden doğan tüm riskler kullanıcıya aittir.</p>
+
+<p><strong>4.3. Güvenli Alışveriş Sorumluluğu</strong></p>
+<p>Kullanıcılar, ürün ve satıcı doğrulamasını yapmakla yükümlüdür. Platform, güvenli alışveriş garantisi vermez.</p>
+
+<h3>5. GİZLİLİK VE KİŞİSEL VERİLERİN KORUNMASI (KVKK)</h3>
+<p><strong>5.1. İşlenen Kişisel Veriler</strong></p>
+<p>Platform tarafından işlenen veriler: Ad-soyad, e-posta adresi, telefon numarası, konum bilgisi, çağrı işareti, ilan içeriği ve görseller, trafik ve log kayıtları (5651 sayılı Kanun gereği).</p>
+
+<p><strong>5.2. Veri İşleme Amaçları</strong></p>
+<p>Kişisel veriler; ilan yayınlama, kullanıcıların birbirine ulaşması, Platform hizmetlerinin sağlanması amaçlarıyla işlenmektedir.</p>
+
+<p><strong>5.3. Hukuki Sebep</strong></p>
+<p>Veriler, sözleşmenin kurulması ve ifası, meşru menfaat, 5651 sayılı Kanun gereği log tutma yükümlülüğü kapsamında işlenmektedir.</p>
+
+<p><strong>5.4. Veri Paylaşımı</strong></p>
+<p>Kişisel veriler üçüncü kişilerle paylaşılmaz, ancak yetkili kurumların talebi halinde hukuki yükümlülük kapsamında paylaşılabilir.</p>
+
+<p><strong>5.5. Kullanıcı Hakları</strong></p>
+<p>Kullanıcı; veri güncelleme, silme, erişim ve bilgi talebi haklarına sahiptir.</p>
+
+<p><strong>5.6. Açık Rıza</strong></p>
+<p>İlan veren kullanıcı, ilanında paylaştığı bilgilerin herkese açık olacağını kabul eder.</p>
+
+<h3>6. SORUMLULUK REDDİ VE TAZMİNAT</h3>
+<p><strong>6.1. Dolandırıcılık ve Suçlar</strong></p>
+<p>Platform, kullanıcılar arasında gerçekleşen dolandırıcılık, hırsızlık, sahtecilik, gasp, tehdit vb. tüm suçlardan sorumlu değildir.</p>
+
+<p><strong>6.2. Maddi ve Manevi Zararlar</strong></p>
+<p>Platform, kullanıcıların birbirine verdiği zararlardan veya Platform kullanımından doğan maddi/manevi kayıplardan sorumlu tutulamaz.</p>
+
+<p><strong>6.3. Teknik Arızalar</strong></p>
+<p>Platform; erişim hataları, sunucu arızası, veri kaybı, bakım çalışmaları vb. sebeplerle yaşanan aksaklıklardan sorumlu değildir.</p>
+
+<p><strong>6.4. Riskin Kullanıcı Tarafından Kabulü</strong></p>
+<p>Kullanıcı, Platform'u kullanmakla tüm riskleri kabul ettiğini beyan eder.</p>
+
+<p><strong>6.5. Tazminat Hükmü</strong></p>
+<p>Kullanıcı, Platform'un kullanımından doğabilecek tüm zarar, dava, şikayet ve talep durumlarında Platform işletmecisini tazminat sorumluluğundan muaf tuttuğunu kabul eder.</p>
+
+<h3>7. DELİL SÖZLEŞMESİ</h3>
+<p>Platform'un elektronik kayıtları, log kayıtları, veritabanı kayıtları, e-posta yazışmaları ve diğer dijital kayıtları kesin delil niteliğindedir.</p>
+
+<h3>8. UYUŞMAZLIK ÇÖZÜMÜ</h3>
+<p>Uyuşmazlık durumunda Türkiye Cumhuriyeti kanunları uygulanır. Yetkili mahkeme: İstanbul Mahkemeleri ve İcra Daireleridir.</p>
+
+<h3>9. SÖZLEŞME DEĞİŞİKLİKLERİ</h3>
+<p>Platform, sözleşme hükümlerini önceden bildirmeksizin güncelleme hakkını saklı tutar. Güncel sözleşmenin yayınlanmasıyla birlikte yeni hükümler yürürlüğe girer. Platform'un kullanılmaya devam edilmesi yeni hükümlerinin kabul edildiği anlamına gelir.</p>
+
+<h3>10. KABUL BEYANI</h3>
+<p>Kullanıcı, Platform'a üye olarak veya ilan vererek işbu sözleşmenin tüm hükümlerini okuduğunu, anladığını ve aynen kabul ettiğini; Platform'u kullanmanın tüm sorumluluğunu üstlendiğini beyan eder.</p>
+
+<div class="terms-footer">
+<p><strong>⚖️ Hukuki Uyarı:</strong> Bu sözleşme, 5651 sayılı İnternet Ortamında Yapılan Yayınların Düzenlenmesi ve Bu Yayınlar Yoluyla İşlenen Suçlarla Mücadele Edilmesi Hakkında Kanun ve 6698 sayılı Kişisel Verilerin Korunması Kanunu çerçevesinde düzenlenmiştir.</p>
+<p><em>📌 Bu metni dikkatlice okuyunuz. Platform kullanımı, işbu sözleşmenin tüm hükümlerini kabul ettiğiniz anlamına gelir.</em></p>
+</div>
 EOT
         );
         

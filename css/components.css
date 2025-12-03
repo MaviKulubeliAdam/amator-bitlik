@@ -1119,6 +1119,45 @@
       z-index: 10;
     }
 
+    .discount-badge {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      color: white;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      z-index: 10;
+      box-shadow: 0 4px 12px rgba(245, 87, 108, 0.4);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.05);
+      }
+    }
+
+    .listing-price .old-price {
+      text-decoration: line-through;
+      color: #999;
+      font-size: 16px;
+      font-weight: 400;
+      margin-right: 8px;
+      opacity: 0.7;
+    }
+
+    .listing-price .new-price {
+      color: #f5576c;
+      font-size: 24px;
+      font-weight: 700;
+    }
+
     .image-count-badge {
       position: absolute;
       top: 12px;
