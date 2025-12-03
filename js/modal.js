@@ -3,6 +3,157 @@
  */
 
 /**
+ * Ülke telefon kodları ve bayrakları
+ */
+const countryCodes = [
+  { code: 'TR', flag: '🇹🇷', dialCode: '+90', name: 'Türkiye' },
+  { code: 'US', flag: '🇺🇸', dialCode: '+1', name: 'Amerika Birleşik Devletleri' },
+  { code: 'GB', flag: '🇬🇧', dialCode: '+44', name: 'Birleşik Krallık' },
+  { code: 'DE', flag: '🇩🇪', dialCode: '+49', name: 'Almanya' },
+  { code: 'FR', flag: '🇫🇷', dialCode: '+33', name: 'Fransa' },
+  { code: 'IT', flag: '🇮🇹', dialCode: '+39', name: 'İtalya' },
+  { code: 'ES', flag: '🇪🇸', dialCode: '+34', name: 'İspanya' },
+  { code: 'NL', flag: '🇳🇱', dialCode: '+31', name: 'Hollanda' },
+  { code: 'BE', flag: '🇧🇪', dialCode: '+32', name: 'Belçika' },
+  { code: 'AT', flag: '🇦🇹', dialCode: '+43', name: 'Avusturya' },
+  { code: 'CH', flag: '🇨🇭', dialCode: '+41', name: 'İsviçre' },
+  { code: 'SE', flag: '🇸🇪', dialCode: '+46', name: 'İsveç' },
+  { code: 'NO', flag: '🇳🇴', dialCode: '+47', name: 'Norveç' },
+  { code: 'DK', flag: '🇩🇰', dialCode: '+45', name: 'Danimarka' },
+  { code: 'FI', flag: '🇫🇮', dialCode: '+358', name: 'Finlandiya' },
+  { code: 'GR', flag: '🇬🇷', dialCode: '+30', name: 'Yunanistan' },
+  { code: 'PL', flag: '🇵🇱', dialCode: '+48', name: 'Polonya' },
+  { code: 'CZ', flag: '🇨🇿', dialCode: '+420', name: 'Çekya' },
+  { code: 'HU', flag: '🇭🇺', dialCode: '+36', name: 'Macaristan' },
+  { code: 'RO', flag: '🇷🇴', dialCode: '+40', name: 'Romanya' },
+  { code: 'BG', flag: '🇧🇬', dialCode: '+359', name: 'Bulgaristan' },
+  { code: 'HR', flag: '🇭🇷', dialCode: '+385', name: 'Hırvatistan' },
+  { code: 'RS', flag: '🇷🇸', dialCode: '+381', name: 'Sırbistan' },
+  { code: 'UA', flag: '🇺🇦', dialCode: '+380', name: 'Ukrayna' },
+  { code: 'RU', flag: '🇷🇺', dialCode: '+7', name: 'Rusya' },
+  { code: 'JP', flag: '🇯🇵', dialCode: '+81', name: 'Japonya' },
+  { code: 'CN', flag: '🇨🇳', dialCode: '+86', name: 'Çin' },
+  { code: 'KR', flag: '🇰🇷', dialCode: '+82', name: 'Güney Kore' },
+  { code: 'IN', flag: '🇮🇳', dialCode: '+91', name: 'Hindistan' },
+  { code: 'AU', flag: '🇦🇺', dialCode: '+61', name: 'Avustralya' },
+  { code: 'NZ', flag: '🇳🇿', dialCode: '+64', name: 'Yeni Zelanda' },
+  { code: 'CA', flag: '🇨🇦', dialCode: '+1', name: 'Kanada' },
+  { code: 'MX', flag: '🇲🇽', dialCode: '+52', name: 'Meksika' },
+  { code: 'BR', flag: '🇧🇷', dialCode: '+55', name: 'Brezilya' },
+  { code: 'AR', flag: '🇦🇷', dialCode: '+54', name: 'Arjantin' },
+  { code: 'CL', flag: '🇨🇱', dialCode: '+56', name: 'Şili' },
+  { code: 'ZA', flag: '🇿🇦', dialCode: '+27', name: 'Güney Afrika' },
+  { code: 'EG', flag: '🇪🇬', dialCode: '+20', name: 'Mısır' },
+  { code: 'SA', flag: '🇸🇦', dialCode: '+966', name: 'Suudi Arabistan' },
+  { code: 'AE', flag: '🇦🇪', dialCode: '+971', name: 'Birleşik Arap Emirlikleri' },
+  { code: 'IL', flag: '🇮🇱', dialCode: '+972', name: 'İsrail' },
+  { code: 'IQ', flag: '🇮🇶', dialCode: '+964', name: 'Irak' },
+  { code: 'IR', flag: '🇮🇷', dialCode: '+98', name: 'İran' },
+  { code: 'PK', flag: '🇵🇰', dialCode: '+92', name: 'Pakistan' },
+  { code: 'BD', flag: '🇧🇩', dialCode: '+880', name: 'Bangladeş' },
+  { code: 'TH', flag: '🇹🇭', dialCode: '+66', name: 'Tayland' },
+  { code: 'VN', flag: '🇻🇳', dialCode: '+84', name: 'Vietnam' },
+  { code: 'ID', flag: '🇮🇩', dialCode: '+62', name: 'Endonezya' },
+  { code: 'MY', flag: '🇲🇾', dialCode: '+60', name: 'Malezya' },
+  { code: 'SG', flag: '🇸🇬', dialCode: '+65', name: 'Singapur' },
+  { code: 'PH', flag: '🇵🇭', dialCode: '+63', name: 'Filipinler' }
+];
+
+/**
+ * Ülke kodları dropdown'ını doldurur
+ */
+function populateCountryCodes(selectedDialCode = '+90') {
+  const select = document.getElementById('formCountryCode');
+  if (!select) return;
+  
+  select.innerHTML = '';
+  countryCodes.forEach(country => {
+    const option = document.createElement('option');
+    option.value = country.dialCode;
+    option.textContent = `${country.flag} ${country.dialCode}`;
+    option.setAttribute('data-name', country.name);
+    if (country.dialCode === selectedDialCode) {
+      option.selected = true;
+    }
+    select.appendChild(option);
+  });
+}
+
+/**
+ * Telefon numarasını formatlar (detay gösterimi için: +90 548 222 99 89)
+ */
+function formatPhoneForDisplay(phone) {
+  if (!phone) return '';
+  
+  // Parse phone to get country code and number
+  const phoneData = parsePhoneNumber(phone);
+  const dialCode = phoneData.dialCode;
+  const digits = phoneData.number.replace(/\D/g, '');
+  
+  // Format the number part (e.g., 5482229989 -> 548 222 99 89)
+  let formatted = '';
+  if (digits.length <= 3) {
+    formatted = digits;
+  } else if (digits.length <= 6) {
+    formatted = digits.substring(0, 3) + ' ' + digits.substring(3);
+  } else if (digits.length <= 8) {
+    formatted = digits.substring(0, 3) + ' ' + digits.substring(3, 6) + ' ' + digits.substring(6);
+  } else {
+    formatted = digits.substring(0, 3) + ' ' + digits.substring(3, 6) + ' ' + digits.substring(6, 8) + ' ' + digits.substring(8);
+  }
+  
+  return dialCode + ' ' + formatted;
+}
+
+/**
+ * Telefon numarasını formatlar (555 123 4567)
+ */
+function formatPhoneNumber(value) {
+  // Sadece rakamları al
+  const digits = value.replace(/\D/g, '');
+  
+  // Başta 0 varsa kaldır
+  const cleanDigits = digits.replace(/^0+/, '');
+  
+  // En fazla 10 rakam
+  const limited = cleanDigits.substring(0, 10);
+  
+  // 555 123 4567 formatı
+  if (limited.length <= 3) {
+    return limited;
+  } else if (limited.length <= 6) {
+    return limited.substring(0, 3) + ' ' + limited.substring(3);
+  } else {
+    return limited.substring(0, 3) + ' ' + limited.substring(3, 6) + ' ' + limited.substring(6);
+  }
+}
+
+/**
+ * Telefon numarasını parse eder (ülke kodu ve numara)
+ */
+function parsePhoneNumber(fullPhone) {
+  if (!fullPhone) return { dialCode: '+90', number: '' };
+  
+  // Boşlukları temizle
+  const cleaned = fullPhone.trim();
+  
+  // + ile başlıyorsa ülke kodunu ayır
+  const match = cleaned.match(/^(\+\d+)\s*(.*)$/);
+  if (match) {
+    return {
+      dialCode: match[1],
+      number: match[2].replace(/\D/g, '') // Numaradaki tüm boşluk ve karakterleri temizle
+    };
+  }
+  
+  // Ülke kodu yoksa Türkiye varsayılan
+  return {
+    dialCode: '+90',
+    number: cleaned.replace(/\D/g, '').replace(/^0+/, '') // Başındaki 0'ları da kaldır
+  };
+}
+
+/**
  * Modal ayarlarını yapar
  */
 function setupModal() {
@@ -18,6 +169,21 @@ function setupModal() {
     modal.addEventListener('click', (e) => {
       if (e.target.id === 'addListingModal') closeAddListingModal();
     });
+  }
+  
+  // Telefon numarası formatlaması
+  const phoneInput = document.getElementById('formPhone');
+  if (phoneInput) {
+    phoneInput.addEventListener('input', (e) => {
+      const formatted = formatPhoneNumber(e.target.value);
+      e.target.value = formatted;
+    });
+  }
+  
+  // Ülke kodlarını başlangıçta doldur
+  const countryCodeSelect = document.getElementById('formCountryCode');
+  if (countryCodeSelect) {
+    populateCountryCodes('+90');
   }
   
   // Login Required Modal ayarları
@@ -161,20 +327,18 @@ function setupForm() {
   });
   emailInput.addEventListener('input', (e) => e.target.setCustomValidity(''));
 
+  // Telefon numarası doğrulama (10 haneli, başında 0 yok)
   const phoneInput = document.getElementById('formPhone');
-  phoneInput.addEventListener('input', (e) => {
-    let value = e.target.value.replace(/\D/g, '');
-    if (value.length > 11) value = value.slice(0, 11);
-    e.target.value = value;
-    e.target.setCustomValidity(value.length > 0 && value.length !== 11 ? 'Telefon numarası tam olarak 11 hane olmalıdır' : '');
-  });
   phoneInput.addEventListener('blur', (e) => {
-    const value = e.target.value.replace(/\D/g, '');
-    if (value.length > 0 && value.length !== 11) {
-      e.target.setCustomValidity('Telefon numarası tam olarak 11 hane olmalıdır');
+    const digits = e.target.value.replace(/\D/g, '');
+    if (digits.length > 0 && digits.length !== 10) {
+      e.target.setCustomValidity('Telefon numarası tam olarak 10 hane olmalıdır (başında 0 olmadan)');
       e.target.reportValidity();
+    } else {
+      e.target.setCustomValidity('');
     }
   });
+  phoneInput.addEventListener('input', (e) => e.target.setCustomValidity(''));
 }
 
 /**
@@ -293,6 +457,9 @@ function openAddListingModal() {
   document.getElementById('formSubmitBtn').textContent = 'İlanı Yayınla';
   updatePreview();
   
+  // Ülke kodlarını doldur (varsayılan Türkiye)
+  populateCountryCodes('+90');
+  
   // Şehir listesini yükle
   loadCities();
 }
@@ -339,7 +506,11 @@ async function openEditListingModal(listingOrId) {
   document.getElementById('formSellerName').value = listing.seller_name || '';
   document.getElementById('formLocation').value = listing.location || '';
   document.getElementById('formEmail').value = listing.seller_email || '';
-  document.getElementById('formPhone').value = listing.seller_phone || '';
+  
+  // Telefonu parse et ve alanları doldur
+  const phoneData = parsePhoneNumber(listing.seller_phone || '');
+  populateCountryCodes(phoneData.dialCode);
+  document.getElementById('formPhone').value = formatPhoneNumber(phoneData.number);
 
   // Normalize images for previews: stored images may be strings (filenames) or objects
   uploadedImages.forEach(img => { if (img && img.previewUrl) URL.revokeObjectURL(img.previewUrl); });
@@ -586,7 +757,7 @@ async function handleFormSubmit(e) {
     seller_name: document.getElementById('formSellerName').value.trim(),
     location: document.getElementById('formLocation').value.trim(),
     seller_email: document.getElementById('formEmail').value.trim(),
-    seller_phone: document.getElementById('formPhone').value.trim()
+    seller_phone: (document.getElementById('formCountryCode').value + ' ' + document.getElementById('formPhone').value.replace(/\s/g, '')).trim()
   };
 
   try {
@@ -1338,24 +1509,11 @@ function setupCityDropdown() {
 function createDetailSections(listing) {
   // Kontakt linkleri
   const rawPhone = listing.seller_phone || '';
-  const digitsOnly = String(rawPhone).replace(/\D/g, '');
-  let waNumber = digitsOnly;
-  // Türkiye numaralarını normalize et: +90 / 90 / 0XXXXXXXXXX / XXXXXXXXXX
-  if (waNumber) {
-    if (waNumber.startsWith('0') && waNumber.length === 11) {
-      waNumber = '90' + waNumber.slice(1);
-    } else if (waNumber.length === 10) {
-      waNumber = '90' + waNumber;
-    } else if (waNumber.startsWith('90') && waNumber.length >= 12) {
-      // already includes country code; keep as is
-    } else if (waNumber.startsWith('90') && waNumber.length === 11) {
-      // edge: missing one digit; leave unchanged
-    } else {
-      // default: if starts with country code +90 was stripped to 90; ensure 90 prefix
-      if (!waNumber.startsWith('90')) {
-        waNumber = '90' + waNumber;
-      }
-    }
+  // Telefon numarasını parse et (artık ülke kodu dahil gelecek: "+90 5551234567")
+  let waNumber = '';
+  if (rawPhone) {
+    // Sadece rakamları al (+ işareti ve boşlukları kaldır)
+    waNumber = String(rawPhone).replace(/\D/g, '');
   }
   const msg = `Merhaba ${listing.seller_name || ''}, ${listing.title || 'ilanınız'} hakkında iletişime geçmek istiyorum.`;
   const waLink = waNumber ? `https://wa.me/${waNumber}?text=${encodeURIComponent(msg)}` : '';
@@ -1613,7 +1771,7 @@ function renderMyListingsGrid(listings) {
                   <p><strong>${escapeHtml(listing.seller_name)}</strong></p>
                   <p>Çağrı İşareti: ${escapeHtml(listing.callsign)}</p>
                   <p>E-posta: ${escapeHtml(listing.seller_email)}</p>
-                  <p>Telefon: ${escapeHtml(listing.seller_phone)}</p>
+                  <p>Telefon: ${escapeHtml(formatPhoneForDisplay(listing.seller_phone))}</p>
                 </div>
               </div>
             </div>
@@ -1745,7 +1903,11 @@ window.editMyListing = async function(id) {
         document.getElementById('formSellerName').value = listing.seller_name || '';
         document.getElementById('formLocation').value = listing.location || '';
         document.getElementById('formEmail').value = listing.seller_email || '';
-        document.getElementById('formPhone').value = listing.seller_phone || '';
+        
+        // Telefonu parse et ve alanları doldur
+        const phoneData = parsePhoneNumber(listing.seller_phone || '');
+        populateCountryCodes(phoneData.dialCode);
+        document.getElementById('formPhone').value = formatPhoneNumber(phoneData.number);
         
         // Modal başlığı ve submit butonunu özelleştir
         document.querySelector('.modal-header h2').textContent = 'Red Edilen İlanı Düzenle';

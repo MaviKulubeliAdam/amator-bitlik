@@ -46,7 +46,16 @@
       </div>
     </div>
      <div class="form-group"><label for="formEmail">E-posta *</label> <input type="email" id="formEmail" required placeholder="ornek@email.com"></div>
-     <div class="form-group"><label for="formPhone">Telefon *</label> <input type="tel" id="formPhone" required placeholder="0532 111 22 33"></div>
+     <div class="form-group phone-group">
+      <label for="formPhone">Telefon *</label>
+      <div class="phone-input-wrapper">
+        <select id="formCountryCode" class="country-code-select" required>
+          <!-- Will be populated by JS -->
+        </select>
+        <input type="tel" id="formPhone" required placeholder="555 123 4567" maxlength="13" pattern="[0-9\s]{10,13}">
+      </div>
+      <small class="phone-hint">10 haneli numaranızı girin (başında 0 olmadan)</small>
+     </div>
      <div class="form-group terms-group">
       <label class="terms-checkbox-label">
        <input type="checkbox" id="formTermsCheckbox" required>

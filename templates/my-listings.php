@@ -1,5 +1,40 @@
 <div id="ativ-container" class="container my-listings-page">
   <script>pageType = 'my-listings';</script>
+  <?php
+  // Telefon numarasını formatla (detay gösterimi için: +90 548 222 99 89)
+  function format_phone_for_display($phone) {
+    if (empty($phone)) return '';
+    
+    // Parse phone - ülke kodu ve numarayı ayır
+    $phone = trim($phone);
+    $dialCode = '';
+    $number = '';
+    
+    // + ile başlıyorsa ülke kodunu ayır
+    if (preg_match('/^(\+\d+)\s*(.*)$/', $phone, $matches)) {
+      $dialCode = $matches[1];
+      $number = preg_replace('/\D/', '', $matches[2]); // Sadece rakamlar
+    } else {
+      // Ülke kodu yoksa tüm rakamları al
+      $number = preg_replace('/\D/', '', $phone);
+      $dialCode = '+90'; // Varsayılan Türkiye
+    }
+    
+    // Numarayı formatla (5482229989 -> 548 222 99 89)
+    $len = strlen($number);
+    if ($len <= 3) {
+      $formatted = $number;
+    } else if ($len <= 6) {
+      $formatted = substr($number, 0, 3) . ' ' . substr($number, 3);
+    } else if ($len <= 8) {
+      $formatted = substr($number, 0, 3) . ' ' . substr($number, 3, 3) . ' ' . substr($number, 6);
+    } else {
+      $formatted = substr($number, 0, 3) . ' ' . substr($number, 3, 3) . ' ' . substr($number, 6, 2) . ' ' . substr($number, 8);
+    }
+    
+    return $dialCode . ' ' . $formatted;
+  }
+  ?>
   <header class="header">
     <h1>Benim İlanlarım</h1>
     <p>Kendi yayınladığınız ilanların listesi</p>
@@ -176,7 +211,7 @@
                     <p><strong><?php echo esc_html($listing['seller_name']); ?></strong></p>
                     <p>Çağrı İşareti: <?php echo esc_html($listing['callsign']); ?></p>
                     <p>E-posta: <?php echo esc_html($listing['seller_email']); ?></p>
-                    <p>Telefon: <?php echo esc_html($listing['seller_phone']); ?></p>
+                    <p>Telefon: <?php echo esc_html(format_phone_for_display($listing['seller_phone'])); ?></p>
                   </div>
                 </div>
               </div>

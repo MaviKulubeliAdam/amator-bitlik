@@ -36,6 +36,57 @@
       resize: vertical;
       min-height: 120px;
     }
+    
+    /* Telefon input grubu */
+    .phone-input-wrapper {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+    
+    .phone-input-wrapper .country-code-select {
+      flex: 0 0 140px;
+      min-width: 140px;
+      max-width: 140px;
+      padding: 14px 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      font-size: 15px;
+      font-family: inherit;
+      transition: all 0.3s;
+      background-color: #fff;
+      cursor: pointer;
+    }
+    
+    .phone-input-wrapper .country-code-select:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+    }
+    
+    .phone-input-wrapper input[type="tel"] {
+      flex: 1;
+    }
+    
+    .phone-hint {
+      display: block;
+      margin-top: 6px;
+      font-size: 13px;
+      color: #666;
+      font-style: italic;
+    }
+    
+    @media (max-width: 768px) {
+      .phone-input-wrapper {
+        flex-direction: column;
+      }
+      
+      .phone-input-wrapper .country-code-select {
+        flex: none;
+        width: 100%;
+        max-width: 100%;
+      }
+    }
 
     .form-actions {
       display: flex;
