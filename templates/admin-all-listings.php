@@ -80,7 +80,7 @@
         
         // Status istatistikleri
         $status_counts = $wpdb->get_results("SELECT status, COUNT(*) as count FROM $table_name GROUP BY status", ARRAY_A);
-        $status_map = array('pending' => 0, 'approved' => 0, 'rejected' => 0);
+        $status_map = array('pending' => 0, 'approved' => 0, 'rejected' => 0, 'suspended' => 0);
         foreach ($status_counts as $sc) {
             $status_map[$sc['status']] = $sc['count'];
         }
@@ -304,6 +304,7 @@
             .ativ-status-pending { background: #fff3cd; color: #856404; }
             .ativ-status-approved { background: #d4edda; color: #155724; }
             .ativ-status-rejected { background: #f8d7da; color: #721c24; }
+            .ativ-status-suspended { background: #e2e3e5; color: #383d41; }
             
             .ativ-status-new { background: #d4edda; color: #155724; padding: 4px 8px; border-radius: 4px; font-size: 11px; }
             .ativ-status-old { background: #fff3cd; color: #856404; padding: 4px 8px; border-radius: 4px; font-size: 11px; }
@@ -437,6 +438,10 @@
                     <div class="ativ-stat-label">❌ Reddedilmiş</div>
                     <div class="ativ-stat-value"><?php echo $status_map['rejected']; ?></div>
                 </div>
+                <div class="ativ-stat-card" style="border-left-color: #6c757d; cursor: pointer;" onclick="document.querySelector('select[name=status]').value='suspended'; document.querySelector('form').submit();">
+                    <div class="ativ-stat-label">🚫 Askıya Alınmış</div>
+                    <div class="ativ-stat-value"><?php echo $status_map['suspended']; ?></div>
+                </div>
             </div>
             
             <!-- Arama ve Filtreler -->
@@ -468,6 +473,7 @@
                             <option value="pending" <?php selected($status_filter, 'pending'); ?>>⏳ Onay Bekleyen</option>
                             <option value="approved" <?php selected($status_filter, 'approved'); ?>>✅ Onaylanmış</option>
                             <option value="rejected" <?php selected($status_filter, 'rejected'); ?>>❌ Reddedilmiş</option>
+                            <option value="suspended" <?php selected($status_filter, 'suspended'); ?>>🚫 Askıya Alınmış</option>
                         </select>
                     </div>
                     
@@ -543,6 +549,9 @@
                                             } elseif ($listing['status'] === 'rejected') {
                                                 $status_label = '❌ Reddedildi';
                                                 $status_class = 'ativ-status-rejected';
+                                            } elseif ($listing['status'] === 'suspended') {
+                                                $status_label = '🚫 Askıya Alındı';
+                                                $status_class = 'ativ-status-suspended';
                                             }
                                         ?>
                                         <span class="ativ-status-badge <?php echo $status_class; ?>"><?php echo $status_label; ?></span>
