@@ -1001,7 +1001,7 @@ window.editListing = async function(id) {
 window.confirmDeleteListing = async function(id) {
   // Önce ban durumunu kontrol et (Console bypass koruması)
   try {
-    const banCheckResponse = await fetch(ajaxurl, {
+    const banCheckResponse = await fetch(window.ajaxurl || ajaxurl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({

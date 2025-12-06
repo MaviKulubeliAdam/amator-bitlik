@@ -1,5 +1,9 @@
 <div id="ativ-container" class="container my-listings-page">
-  <script>window.pageType = 'my-listings';</script>
+  <script>
+    window.pageType = 'my-listings';
+    window.ajaxurl = '<?php echo admin_url('admin-ajax.php'); ?>';
+    window.atheneaNonce = '<?php echo wp_create_nonce('ativ_profile_nonce'); ?>';
+  </script>
   <?php
   // Telefon numarasını formatla (detay gösterimi için: +90 548 222 99 89)
   function format_phone_for_display($phone) {
