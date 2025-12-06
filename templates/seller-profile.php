@@ -107,9 +107,6 @@ document.addEventListener('DOMContentLoaded', function() {
         <button class="profile-tab-button active" data-tab="profile-info">
             <span class="tab-icon">📋</span> Profil Bilgileri
         </button>
-        <button class="profile-tab-button" data-tab="email-alerts">
-            <span class="tab-icon">📧</span> E-posta Uyarıları
-        </button>
         <button class="profile-tab-button" data-tab="search-alerts">
             <span class="tab-icon">🔔</span> İlan Arama Uyarıları
         </button>
@@ -172,69 +169,7 @@ document.addEventListener('DOMContentLoaded', function() {
             </form>
         </div>
 
-        <!-- 2. E-posta Uyarıları Sekmesi -->
-        <div id="email-alerts" class="profile-tab-panel">
-            <div class="section-title">E-posta Uyarı Tercihleri</div>
-            <form id="emailAlertsForm" class="profile-form">
-                <div class="alert-setting">
-                    <div class="alert-header">
-                        <input type="checkbox" id="alertNewRequests" name="alert_new_requests" checked>
-                        <label for="alertNewRequests">
-                            <strong>Yeni İlan Başvuruları</strong>
-                            <p class="alert-description">İlanlarınıza yeni sorgu veya teklif geldiğinde bildirim al</p>
-                        </label>
-                    </div>
-                </div>
-
-                <div class="alert-setting">
-                    <div class="alert-header">
-                        <input type="checkbox" id="alertInquiries" name="alert_inquiries" checked>
-                        <label for="alertInquiries">
-                            <strong>İlan Soruları ve Teklifler</strong>
-                            <p class="alert-description">Başkalarından soru veya teklif aldığında bildirim al</p>
-                        </label>
-                    </div>
-                </div>
-
-                <div class="alert-setting">
-                    <div class="alert-header">
-                        <input type="checkbox" id="alertListingApproval" name="alert_listing_approval" checked>
-                        <label for="alertListingApproval">
-                            <strong>İlan Onay Bildirimleri</strong>
-                            <p class="alert-description">İlanlarınız onaylandığında veya reddedildiğinde bildirim al</p>
-                        </label>
-                    </div>
-                </div>
-
-                <div class="alert-setting">
-                    <div class="alert-header">
-                        <input type="checkbox" id="alertSystemNotifications" name="alert_system_notifications" checked>
-                        <label for="alertSystemNotifications">
-                            <strong>Sistem Bildirimleri</strong>
-                            <p class="alert-description">Önemli sistem bildirimleri ve duyurular</p>
-                        </label>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="emailFrequency">E-posta Gönderme Sıklığı</label>
-                    <select id="emailFrequency" name="email_frequency" required>
-                        <option value="immediate">Anında (Her bildirim için e-posta)</option>
-                        <option value="daily">Günlük Özet (Her gün bir e-posta)</option>
-                        <option value="weekly">Haftalık Özet (Haftada bir e-posta)</option>
-                        <option value="monthly">Aylık Özet (Ayda bir e-posta)</option>
-                    </select>
-                </div>
-
-                <div class="form-actions">
-                    <button type="submit" class="btn-primary">💾 Ayarları Kaydet</button>
-                </div>
-
-                <div id="emailAlertsMessage" class="form-message"></div>
-            </form>
-        </div>
-
-        <!-- 3. İlan Arama Uyarıları Sekmesi -->
+        <!-- 2. İlan Arama Uyarıları Sekmesi -->
         <div id="search-alerts" class="profile-tab-panel">
             <div class="section-title">İlan Arama Uyarıları</div>
             <p class="section-description">Belirli kriterlere uygun ilanlar yayınlandığında e-posta uyarısı alın</p>
@@ -880,9 +815,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (tabName === 'profile-info') {
             console.log('[DEBUG] Profil bilgileri sekmesi yükleniyor...');
             loadProfileInfo();
-        } else if (tabName === 'email-alerts') {
-            console.log('[DEBUG] E-posta uyarıları sekmesi yükleniyor...');
-            loadEmailAlerts();
         } else if (tabName === 'search-alerts') {
             console.log('[DEBUG] Arama uyarıları sekmesi yükleniyor...');
             loadSearchAlerts();
