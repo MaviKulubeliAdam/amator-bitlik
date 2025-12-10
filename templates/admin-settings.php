@@ -68,6 +68,10 @@
                     'name' => 'Arama Uyarısı E-postası',
                     'body' => sanitize_textarea_field($_POST['mail_template_alert_email'] ?? '')
                 ),
+                'ban_email' => array(
+                    'name' => 'Kullanıcı Yasaklama E-postası',
+                    'body' => sanitize_textarea_field($_POST['mail_template_ban_email'] ?? '')
+                ),
                 'user_terms' => array(
                     'name' => 'Kullanıcı Sözleşmesi',
                     'body' => wp_kses_post($_POST['ativ_terms_text'] ?? '')
@@ -128,6 +132,7 @@
         $mail_template_admin_new_listing = $this->get_template_body('admin_new_listing', 'admin_new_listing');
         $mail_template_admin_listing_updated = $this->get_template_body('admin_listing_updated', 'admin_listing_updated');
         $mail_template_alert_email = $this->get_template_body('alert_email', 'alert_email');
+        $mail_template_ban_email = $this->get_template_body('ban_email', 'ban_email');
 
         // Lokalizasyon için ülkeler
         $cities_table = $wpdb->prefix . 'amator_bitlik_sehirler';
@@ -500,6 +505,24 @@
                     <div class="ativ-form-group">
                         <label for="mail_template_alert_email">Arama uyarısı için gönderilecek e-posta</label>
                         <textarea id="mail_template_alert_email" name="mail_template_alert_email"><?php echo esc_textarea($mail_template_alert_email); ?></textarea>
+                    </div>
+                    
+                    <hr style="margin: 40px 0; border: none; border-top: 2px solid #ddd;">
+                    
+                    <h3 style="margin-top: 30px; color: #0073aa;">🚫 Kullanıcı Yasaklama E-postası</h3>
+                    <p style="color: #666; margin-bottom: 20px;">Kullanıcı yasaklandığında gönderilecek e-posta şablonu.</p>
+                    
+                    <div class="ativ-template-variables">
+                        <strong>Kullanıcı Yasaklama E-postası için Kullanılabilir Değişkenler:</strong><br>
+                        {user_name} - Kullanıcı adı<br>
+                        {ban_reason} - Yasaklanma nedeni<br>
+                        {suspended_count} - Askıya alınan ilan sayısı<br>
+                        {site_url} - Platform URL'i
+                    </div>
+                    
+                    <div class="ativ-form-group">
+                        <label for="mail_template_ban_email">Kullanıcı yasaklandığında gönderilecek e-posta</label>
+                        <textarea id="mail_template_ban_email" name="mail_template_ban_email"><?php echo esc_textarea($mail_template_ban_email); ?></textarea>
                     </div>
                 </div>
                 

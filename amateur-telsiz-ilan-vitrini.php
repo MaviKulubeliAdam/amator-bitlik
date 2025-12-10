@@ -1049,15 +1049,99 @@ class AmateurTelsizIlanVitrini {
             
             error_log('Suspended listings count: ' . $suspended_count);
             
+            // Kullanıcıya e-posta gönder
+            $user = $wpdb->get_row($wpdb->prepare(
+                "SELECT email, name FROM $table_name WHERE user_id = %d",
+                $user_id
+            ));
+            
+            if ($user && !empty($user->email)) {
+                $this->send_ban_notification_email($user->email, $user->name, $ban_reason, $suspended_count);
+            }
+            
             wp_send_json_success('Kullanıcı yasaklandı ve ' . $suspended_count . ' ilan askıya alındı');
         } else {
             wp_send_json_error('Veritabanı hatası: ' . $wpdb->last_error);
         }
     }
-
+    
     /**
-     * Kullanıcının yasağını kaldır
+     * Yasaklama bildirimi e-postası gönder
      */
+    private function send_ban_notification_email($to, $user_name, $ban_reason, $suspended_count) {
+        global $wpdb;
+        
+        $subject = '⚠️ Hesabınız Yasaklanmıştır - Amatör Bitlik';
+        
+        // E-posta içeriğini oluştur
+        $body = "Merhaba {user_name},\n\n";
+        $body .= "Ne yazık ki hesabınız yasaklanmıştır.\n\n";
+        $body .= "Yasaklanma Nedeni:\n";
+        $body .= "{ban_reason}\n\n";
+        $body .= "Bu yasaklama nedeniyle:\n";
+        $body .= "• Yeni ilan ekleyemeyeceksiniz\n";
+        $body .= "• İlanlarınızı düzenleyemeyeceksiniz\n";
+        $body .= "• Mevcut {suspended_count} aktif ilanınız askıya alınmıştır\n\n";
+        $body .= "Daha fazla bilgi için lütfen site yöneticisi ile iletişime geçiniz.\n\n";
+        $body .= "Saygılarımızla,\nAmatör Bitlik Yönetimi";
+        
+        // Şablon tablosundan oku (varsa)
+        $body = $this->get_or_create_ban_email_template($body, $user_name, $ban_reason, $suspended_count);
+        
+        // HTML e-posta formatı
+        $html_body = '<html><head><meta charset="UTF-8"><style>';
+        $html_body .= 'body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }';
+        $html_body .= '.email-container { max-width: 600px; margin: 0 auto; padding: 20px; }';
+        $html_body .= '.header { background: #dc3545; color: white; padding: 20px; border-radius: 4px 4px 0 0; text-align: center; }';
+        $html_body .= '.content { background: #f9f9f9; padding: 20px; border: 1px solid #ddd; border-radius: 0 0 4px 4px; }';
+        $html_body .= '.footer { text-align: center; padding: 10px; font-size: 12px; color: #999; margin-top: 20px; }';
+        $html_body .= '.warning-box { background: #fff3cd; padding: 15px; border-left: 4px solid #ffc107; margin: 15px 0; }';
+        $html_body .= '</style></head><body>';
+        $html_body .= '<div class="email-container">';
+        $html_body .= '<div class="header"><h2>⚠️ Hesabınız Yasaklanmıştır</h2></div>';
+        $html_body .= '<div class="content">' . nl2br(esc_html($body)) . '</div>';
+        $html_body .= '<div class="footer">';
+        $html_body .= '<p>Bu e-posta otomatik olarak gönderilmiştir. Lütfen yanıtlamayınız.</p>';
+        $html_body .= '<p>&copy; 2025 Amatör Bitlik - Tüm hakları saklıdır.</p>';
+        $html_body .= '</div></div></body></html>';
+        
+        // E-postayı gönder
+        $this->send_mail($to, $subject, $html_body);
+    }
+    
+    /**
+     * Ban e-postası şablonunu al veya varsayılanı oluştur
+     */
+    private function get_or_create_ban_email_template($default_body, $user_name, $ban_reason, $suspended_count) {
+        global $wpdb;
+        $templates_table = $wpdb->prefix . 'amator_telsiz_sablonlar';
+        
+        // Tablo varsa şablonu al
+        $table_exists = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $templates_table));
+        if ($table_exists) {
+            $template = $wpdb->get_row($wpdb->prepare(
+                "SELECT template_body FROM `{$templates_table}` WHERE template_key = %s LIMIT 1",
+                'ban_email'
+            ));
+            if ($template && !empty($template->template_body)) {
+                $body = $template->template_body;
+                // Değişkenleri değiştir
+                $body = str_replace(
+                    ['{user_name}', '{ban_reason}', '{suspended_count}', '{site_url}'],
+                    [$user_name, $ban_reason, $suspended_count, home_url('/amator-bitlik/')],
+                    $body
+                );
+                return $body;
+            }
+        }
+        
+        // Varsayılan şablonu kullan
+        return str_replace(
+            ['{user_name}', '{ban_reason}', '{suspended_count}'],
+            [$user_name, $ban_reason, $suspended_count],
+            $default_body
+        );
+    }
     public function ajax_unban_user() {
         if (!current_user_can('manage_options')) {
             wp_send_json_error('Yetkiniz yok');
@@ -3118,6 +3202,26 @@ Merhaba,
 
 Saygılarımızla,
 Amatör Bitlik Ekibi
+EOT,
+            'ban_email' => <<<'EOT'
+Merhaba {user_name},
+
+Ne yazık ki hesabınız yasaklanmıştır.
+
+<h4>Yasaklanma Nedeni:</h4>
+<p>{ban_reason}</p>
+
+<h4>Bu yasaklama nedeniyle:</h4>
+<ul>
+<li>Yeni ilan ekleyemeyeceksiniz</li>
+<li>İlanlarınızı düzenleyemeyeceksiniz</li>
+<li>Mevcut {suspended_count} aktif ilanınız askıya alınmıştır</li>
+</ul>
+
+<p>Daha fazla bilgi için lütfen site yöneticisi ile iletişime geçiniz.</p>
+
+Saygılarımızla,
+Amatör Bitlik Yönetimi
 EOT
         );
         
@@ -3209,6 +3313,13 @@ EOT
                 'template_subject' => '📻 {alert_name} - Yeni İlan(lar) Bulundu!',
                 'template_body' => $this->get_default_template('alert_email'),
                 'template_description' => 'Kullanıcı arama uyarıları için eşleşen ilanlar olduğunda gönderilen e-posta'
+            ),
+            array(
+                'template_key' => 'ban_email',
+                'template_name' => 'Kullanıcı Yasaklama E-postası',
+                'template_subject' => '⚠️ Hesabınız Yasaklanmıştır - Amatör Bitlik',
+                'template_body' => $this->get_default_template('ban_email'),
+                'template_description' => 'Kullanıcı yasaklandığında gönderilen e-posta'
             )
         );
         
