@@ -1,9 +1,11 @@
 <?php
 /**
- * Plugin Name: Amatör Telsiz İlan Vitrini
- * Description: Amatör telsiz ekipmanları için ilan vitrini
- * Version: 1.0
- * Author: Your Name
+ * Plugin Name: Amatör Bitlik
+ * Description: Amatör telsiz ekipmanları için ilan panosu yönetim sistemi
+ * Version: 1.1
+ * Author: TA4AQG - Erkin Mercan
+ * Text Domain: amator-bitlik
+ * Domain Path: /languages
  */
 
 // Kullanıcılar tablosu oluşturma
@@ -179,14 +181,7 @@ add_action('wp_ajax_nopriv_ativ_get_cities', function() {
 
 // (Lokalizasyon sayfası eklenti menüsüne taşındı - add_admin_menu üzerinden ekleniyor)
 
-/**
- * Plugin Name: Amatör Bitlik
- * Description: Amatör telsiz ekipmanları için ilan panosu yönetim sistemi
- * Version: 1.1
- * Author: TA4AQG - Erkin Mercan
- * Text Domain: amator-bitlik
- * Domain Path: /languages
- */
+
 
 // Güvenlik kontrolü
 if (!defined('ABSPATH')) {
