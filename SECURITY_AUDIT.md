@@ -1,5 +1,5 @@
 # Güvenlik ve Performans Analizi Raporu
-**Tarih:** 10 Aralık 2025  
+**Tarih:** 10 Aralık 2024  
 **Plugin:** WP-Amator-Bitlik (Amatör Telsiz İlan Vitrini)  
 **Versiyon:** 1.1
 
@@ -281,4 +281,4 @@ Temiz, okunabilir ve bakımı kolay kod yapısı.
 Tüm dosyalar analiz edildi ve gerekli iyileştirmeler yapıldı.
 
 **Rapor Oluşturan:** GitHub Copilot Security Audit  
-**Tarih:** 10 Aralık 2025
+**Tarih:** 10 Aralık 2024

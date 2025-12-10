@@ -52,9 +52,11 @@ function ativ_create_tables() {
     // Mevcut tabloya kolonları ekle (güncelleme için)
     $row = $wpdb->get_results($wpdb->prepare("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = %s AND COLUMN_NAME = 'is_banned'", $table_name));
     if(empty($row)){
-        // Table name is validated through wpdb->prefix which is safe
+        // Table name is validated through wpdb->prefix which is safe - using backticks for SQL safety
         $wpdb->query("ALTER TABLE `{$table_name}` ADD COLUMN is_banned TINYINT(1) DEFAULT 0");
+        // Adding ban_reason column for storing ban explanation
         $wpdb->query("ALTER TABLE `{$table_name}` ADD COLUMN ban_reason TEXT");
+        // Adding banned_at column for tracking ban timestamp
         $wpdb->query("ALTER TABLE `{$table_name}` ADD COLUMN banned_at DATETIME");
     }
 }
