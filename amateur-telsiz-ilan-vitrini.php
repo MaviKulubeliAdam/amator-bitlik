@@ -804,7 +804,7 @@ class AmateurTelsizIlanVitrini {
 
         global $wpdb;
         $user_id = get_current_user_id();
-        $table_name = $wpdb->prefix . 'amator_telsiz_uyarılar';
+        $table_name = $wpdb->prefix . 'amator_bitlik_uyarılar';
 
         // Tabloyu mevcut değilse oluştur (şema uyumu için)
         $this->create_search_alerts_table();
@@ -858,7 +858,7 @@ class AmateurTelsizIlanVitrini {
 
         global $wpdb;
         $user_id = get_current_user_id();
-        $table_name = $wpdb->prefix . 'amator_telsiz_uyarılar';
+        $table_name = $wpdb->prefix . 'amator_bitlik_uyarılar';
 
         // Tablo yoksa oluştur
         $this->create_search_alerts_table();
@@ -900,7 +900,7 @@ class AmateurTelsizIlanVitrini {
             wp_send_json_error('Geçersiz uyarı');
         }
 
-        $table_name = $wpdb->prefix . 'amator_telsiz_uyarılar';
+        $table_name = $wpdb->prefix . 'amator_bitlik_uyarılar';
 
         // Tablo yoksa oluştur
         $this->create_search_alerts_table();
@@ -944,7 +944,7 @@ class AmateurTelsizIlanVitrini {
         global $wpdb;
         $user_id = get_current_user_id();
         $alert_id = intval($_POST['alert_id'] ?? 0);
-        $table_name = $wpdb->prefix . 'amator_telsiz_uyarılar';
+        $table_name = $wpdb->prefix . 'amator_bitlik_uyarılar';
 
         $wpdb->delete($table_name, array(
             'id' => $alert_id,
@@ -1151,7 +1151,7 @@ class AmateurTelsizIlanVitrini {
 
     private function create_search_alerts_table() {
         global $wpdb;
-        $table_name = $wpdb->prefix . 'amator_telsiz_uyarılar';
+        $table_name = $wpdb->prefix . 'amator_bitlik_uyarılar';
         $charset_collate = $wpdb->get_charset_collate();
 
         if ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table_name)) == $table_name) {
@@ -3428,7 +3428,7 @@ EOT
         
         error_log('[ATIV] E-posta uyarıları kontrolü başladı...');
         
-        $alerts_table = $wpdb->prefix . 'amator_telsiz_uyarılar';
+        $alerts_table = $wpdb->prefix . 'amator_bitlik_uyarılar';
         $listings_table = $wpdb->prefix . 'amator_ilanlar';
         $users_table = $wpdb->prefix . 'amator_bitlik_kullanıcılar';
         $sent_emails_table = $wpdb->prefix . 'amator_bitlik_alarm';
@@ -3578,7 +3578,9 @@ EOT
         $query .= " ORDER BY created_at DESC LIMIT 20";
         
         if (!empty($params)) {
-            $listings = $wpdb->get_results($wpdb->prepare($query, ...$params));
+            $listings = $wpdb->get_results(
+                $wpdb->prepare($query, $params)
+            );
         } else {
             $listings = $wpdb->get_results($query);
         }

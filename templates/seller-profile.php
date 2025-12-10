@@ -102,7 +102,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .search-alert-card h4 {margin:0 0 12px 0;font-size:17px;font-weight:700;color:#1e293b;border-bottom:2px solid #f1f5f9;padding-bottom:8px;}
         .search-alert-card .alert-meta {display:flex;flex-direction:column;gap:10px;color:#475569;font-size:13px;line-height:1.6;}
         .alert-detail-row {display:flex;align-items:center;gap:10px;padding:6px 0;}
-        .alert-detail-row .label {font-weight:600;color:#334155;min-width:100px;flex-shrink:0;}
+        .alert-detail-row .label {font-weight:600;color:#334155;min-width:140px;flex-shrink:0;}
         .alert-detail-row .value {color:#64748b;background:#f8fafc;padding:4px 12px;border-radius:6px;border:1px solid #e2e8f0;}
         .alert-badges {display:flex;gap:8px;margin-top:4px;flex-wrap:wrap;}
         .chip {display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:6px;background:#f1f5f9;color:#475569;font-size:12px;font-weight:600;border:1px solid #e2e8f0;}
@@ -1397,8 +1397,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="alert-content" style="flex:1;">
                         <h4>${alert.alert_name}</h4>
                         <div class="alert-badges">
-                            <span class="chip primary">${categoryLabel}</span>
-                            <span class="chip accent">${freqLabel}</span>
+                            <span class="chip primary" title="Kategori Filtresi: ${categoryLabel}">Kategori: ${categoryLabel}</span>
+                            <span class="chip accent" title="Bildirim Sıklığı: ${freqLabel}">Sıklık: ${freqLabel}</span>
                         </div>
                         <div class="alert-meta">
                             <div class="alert-detail-row">
