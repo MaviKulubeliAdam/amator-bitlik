@@ -136,6 +136,21 @@ register_activation_hook(__FILE__, function() {
             ]);
         }
     }
+    
+    // Alarm tablosunu oluştur
+    $email_records_table = $wpdb->prefix . 'amator_bitlik_alarm';
+    $email_records_sql = "CREATE TABLE IF NOT EXISTS `{$email_records_table}` (
+        id bigint(20) NOT NULL AUTO_INCREMENT,
+        alert_id bigint(20) NOT NULL,
+        user_id bigint(20) NOT NULL,
+        email varchar(100) NOT NULL,
+        listing_count int(11) DEFAULT 0,
+        sent_at datetime DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (id),
+        KEY alert_id (alert_id),
+        KEY user_id (user_id)
+    ) $charset_collate;";
+    dbDelta($email_records_sql);
 });
 
 // Şehirleri JSON dönen AJAX endpoint
@@ -3088,6 +3103,21 @@ EOT,
 <p><strong>⚖️ Hukuki Uyarı:</strong> Bu sözleşme, 5651 sayılı İnternet Ortamında Yapılan Yayınların Düzenlenmesi ve Bu Yayınlar Yoluyla İşlenen Suçlarla Mücadele Edilmesi Hakkında Kanun ve 6698 sayılı Kişisel Verilerin Korunması Kanunu çerçevesinde düzenlenmiştir.</p>
 <p><em>📌 Bu metni dikkatlice okuyunuz. Platform kullanımı, işbu sözleşmenin tüm hükümlerini kabul ettiğiniz anlamına gelir.</em></p>
 </div>
+EOT,
+            'alert_email' => <<<'EOT'
+Merhaba,
+
+"{alert_name}" adlı arama uyarınız için <strong>{listing_count}</strong> yeni ilan bulundu!
+
+<h4>Bulunan İlanlar:</h4>
+{listings_html}
+
+<p><a href="{site_url}">Tüm ilanları görmek için platformu ziyaret edin</a></p>
+
+<p>Bu e-posta otomatik olarak gönderilmiştir. Lütfen yanıtlamayınız.</p>
+
+Saygılarımızla,
+Amatör Bitlik Ekibi
 EOT
         );
         
@@ -3172,6 +3202,13 @@ EOT
                 'template_subject' => 'İlanınız yönetici tarafından silinmiştir',
                 'template_body' => $this->get_default_template('deleted_by_admin'),
                 'template_description' => 'Yönetici ilan sildiğinde gönderilen e-posta'
+            ),
+            array(
+                'template_key' => 'alert_email',
+                'template_name' => 'Arama Uyarısı E-postası',
+                'template_subject' => '📻 {alert_name} - Yeni İlan(lar) Bulundu!',
+                'template_body' => $this->get_default_template('alert_email'),
+                'template_description' => 'Kullanıcı arama uyarıları için eşleşen ilanlar olduğunda gönderilen e-posta'
             )
         );
         
@@ -3383,6 +3420,236 @@ EOT
      * @param array $attachments Ekler (opsiyonel)
      * @return bool Başarı durumu
      */
+    /**
+     * Arama uyarılarını kontrol et ve eşleşen ilanlar için e-posta gönder
+     */
+    public static function send_alert_emails() {
+        global $wpdb;
+        
+        error_log('[ATIV] E-posta uyarıları kontrolü başladı...');
+        
+        $alerts_table = $wpdb->prefix . 'amator_telsiz_uyarılar';
+        $listings_table = $wpdb->prefix . 'amator_ilanlar';
+        $users_table = $wpdb->prefix . 'amator_bitlik_kullanıcılar';
+        $sent_emails_table = $wpdb->prefix . 'amator_bitlik_alarm';
+        
+        // Tüm uyarıları al
+        $alerts = $wpdb->get_results("SELECT * FROM `{$alerts_table}`");
+        
+        if (empty($alerts)) {
+            error_log('[ATIV] Kontrol edilecek uyarı bulunamadı.');
+            return;
+        }
+        
+        $instance = new self();
+        
+        foreach ($alerts as $alert) {
+            error_log('[ATIV] Uyarı #' . $alert->id . ' kontrol ediliyor... (Kullanıcı: ' . $alert->user_id . ', Sıklık: ' . $alert->frequency . ')');
+            
+            // Sıklık kontrolü - Saati belirle
+            $check_hours = [
+                'immediate' => 0,  // Her saat kontrol et
+                'daily' => 24,     // Günde bir kez kontrol et
+                'weekly' => 168    // Haftada bir kez kontrol et
+            ];
+            
+            $hours_ago = $check_hours[$alert->frequency] ?? 0;
+            
+            // Son e-posta gönderimi zamanını kontrol et
+            $last_email = $wpdb->get_row($wpdb->prepare(
+                "SELECT * FROM `{$sent_emails_table}` WHERE alert_id = %d ORDER BY sent_at DESC LIMIT 1",
+                $alert->id
+            ));
+            
+            if ($last_email) {
+                $last_sent_time = strtotime($last_email->sent_at);
+                $time_diff = time() - $last_sent_time;
+                $hours_diff = $time_diff / 3600;
+                
+                if ($hours_diff < $hours_ago) {
+                    error_log('[ATIV] Uyarı #' . $alert->id . ': Henüz gönderme zamanı gelmedi. (' . round($hours_diff, 1) . '/' . $hours_ago . ' saat)');
+                    continue;
+                }
+            }
+            
+            // Kullanıcı e-postasını al
+            $user = $wpdb->get_row($wpdb->prepare(
+                "SELECT email FROM `{$users_table}` WHERE user_id = %d",
+                $alert->user_id
+            ));
+            
+            if (!$user || empty($user->email)) {
+                error_log('[ATIV] Kullanıcı #' . $alert->user_id . ' e-postası bulunamadı.');
+                continue;
+            }
+            
+            // Eşleşen ilanları bul
+            $matching_listings = self::find_matching_listings($alert);
+            
+            if (empty($matching_listings)) {
+                error_log('[ATIV] Uyarı #' . $alert->id . ' için eşleşen ilan bulunamadı.');
+                continue;
+            }
+            
+            error_log('[ATIV] Uyarı #' . $alert->id . ' için ' . count($matching_listings) . ' eşleşen ilan bulundu.');
+            
+            // E-posta oluştur ve gönder
+            $email_sent = self::send_alert_email($user->email, $alert, $matching_listings);
+            
+            if ($email_sent) {
+                // Gönderimi kayıt et
+                $wpdb->insert($sent_emails_table, [
+                    'alert_id' => $alert->id,
+                    'user_id' => $alert->user_id,
+                    'listing_count' => count($matching_listings),
+                    'sent_at' => current_time('mysql'),
+                    'email' => $user->email
+                ], ['%d', '%d', '%d', '%s', '%s']);
+                
+                error_log('[ATIV] E-posta gönderildi: ' . $user->email);
+            }
+        }
+        
+        error_log('[ATIV] E-posta uyarıları kontrolü tamamlandı.');
+    }
+    
+    /**
+     * Eşleşen ilanları bul
+     */
+    private static function find_matching_listings($alert) {
+        global $wpdb;
+        $listings_table = $wpdb->prefix . 'amator_ilanlar';
+        
+        // Sorgu oluştur
+        $query = "SELECT * FROM `{$listings_table}` WHERE status = 'approved'";
+        $params = [];
+        
+        // Kategori filtresi (boş string'i kontrol et)
+        $category = trim($alert->category ?? '');
+        if (!empty($category)) {
+            $query .= " AND category = %s";
+            $params[] = $category;
+        }
+        
+        // Durum filtresi (boş string'i kontrol et)
+        $condition = trim($alert->condition ?? '');
+        if (!empty($condition)) {
+            $query .= " AND `condition` = %s";
+            $params[] = $condition;
+        }
+        
+        // Konum filtresi (boş string'i kontrol et)
+        $location = trim($alert->location ?? '');
+        if (!empty($location)) {
+            $query .= " AND location = %s";
+            $params[] = $location;
+        }
+        
+        // Fiyat aralığı filtresi
+        if (!empty($alert->min_price) && intval($alert->min_price) > 0) {
+            $query .= " AND price >= %d";
+            $params[] = intval($alert->min_price);
+        }
+        
+        if (!empty($alert->max_price) && intval($alert->max_price) > 0) {
+            $query .= " AND price <= %d";
+            $params[] = intval($alert->max_price);
+        }
+        
+        // Anahtar kelime filtresi (boş string'i kontrol et)
+        $keyword = trim($alert->keyword ?? '');
+        if (!empty($keyword)) {
+            $query .= " AND (title LIKE %s OR description LIKE %s OR model LIKE %s OR brand LIKE %s)";
+            $search_keyword = '%' . $keyword . '%';
+            $params[] = $search_keyword;
+            $params[] = $search_keyword;
+            $params[] = $search_keyword;
+            $params[] = $search_keyword;
+        }
+        
+        // Satıcı filtresi (boş string'i kontrol et)
+        $seller_callsign = trim($alert->seller_callsign ?? '');
+        if (!empty($seller_callsign)) {
+            $query .= " AND callsign = %s";
+            $params[] = $seller_callsign;
+        }
+        
+        // En yeni ilanlar önce
+        $query .= " ORDER BY created_at DESC LIMIT 20";
+        
+        if (!empty($params)) {
+            $listings = $wpdb->get_results($wpdb->prepare($query, ...$params));
+        } else {
+            $listings = $wpdb->get_results($query);
+        }
+        
+        return $listings ?: [];
+    }
+    
+    /**
+     * Uyarı e-postası gönder
+     */
+    private static function send_alert_email($recipient_email, $alert, $listings) {
+        $instance = new self();
+        global $wpdb;
+        
+        // E-posta içeriğini oluştur
+        $subject = '📻 ' . $alert->alert_name . ' - Yeni İlan(lar) Bulundu!';
+        
+        // İlanları HTML formatında hazırla
+        $listings_html = '<ul style="list-style: none; padding: 0;">';
+        foreach ($listings as $listing) {
+            $listings_html .= '<li style="background: #f0f0f0; padding: 10px; margin: 10px 0; border-radius: 4px;">';
+            $listings_html .= '<strong>' . esc_html($listing->title) . '</strong><br>';
+            $listings_html .= '<small>Satıcı: ' . esc_html($listing->callsign) . ' | Konum: ' . esc_html($listing->location) . '</small><br>';
+            $listings_html .= '<strong>Fiyat: ' . number_format(floatval($listing->price), 2, ',', '.') . ' ' . esc_html($listing->currency) . '</strong><br>';
+            $listings_html .= '<small>Durum: ' . esc_html($listing->condition) . '</small>';
+            $listings_html .= '</li>';
+        }
+        $listings_html .= '</ul>';
+        
+        // Şablon tablosundan oku (tablo varsa)
+        $body = $instance->get_default_template('alert_email');
+        
+        $templates_table = $wpdb->prefix . 'amator_telsiz_sablonlar';
+        $table_exists = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $templates_table));
+        
+        if ($table_exists) {
+            $template = $wpdb->get_row($wpdb->prepare(
+                "SELECT template_body FROM `{$templates_table}` WHERE template_key = %s LIMIT 1",
+                'alert_email'
+            ));
+            if ($template && !empty($template->template_body)) {
+                $body = $template->template_body;
+            }
+        }
+        
+        // Değişkenleri değiştir
+        $body = str_replace(
+            ['{alert_name}', '{listing_count}', '{listings_html}', '{site_url}'],
+            [$alert->alert_name, count($listings), $listings_html, home_url('/amator-bitlik/')],
+            $body
+        );
+        
+        // HTML e-posta formatı
+        $html_body = '<html><head><meta charset="UTF-8"><style>';
+        $html_body .= 'body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }';
+        $html_body .= '.email-container { max-width: 600px; margin: 0 auto; padding: 20px; }';
+        $html_body .= '.header { background: #667eea; color: white; padding: 20px; border-radius: 4px 4px 0 0; text-align: center; }';
+        $html_body .= '.content { background: #f9f9f9; padding: 20px; border: 1px solid #ddd; border-radius: 0 0 4px 4px; }';
+        $html_body .= '.footer { text-align: center; padding: 10px; font-size: 12px; color: #999; margin-top: 20px; }';
+        $html_body .= '</style></head><body>';
+        $html_body .= '<div class="email-container">';
+        $html_body .= '<div class="header"><h2>📻 Amatör Bitlik</h2></div>';
+        $html_body .= '<div class="content">' . nl2br($body) . '</div>';
+        $html_body .= '<div class="footer">';
+        $html_body .= '<p>Bu e-posta otomatik olarak gönderilmiştir. Lütfen yanıtlamayınız.</p>';
+        $html_body .= '<p>&copy; 2025 Amatör Bitlik - Tüm hakları saklıdır.</p>';
+        $html_body .= '</div></div></body></html>';
+        
+        return $instance->send_mail($recipient_email, $subject, $html_body);
+    }
+    
     public function send_mail($to, $subject, $message, $attachments = array()) {
         $smtp_settings = $this->get_smtp_settings();
         
@@ -3635,6 +3902,34 @@ if (!function_exists('getCategoryName')) {
         return AmateurTelsizIlanVitrini::get_category_name($category);
     }
 }
+
+// E-posta uyarı sistemi - WordPress'in zamanlı görevini kaydet
+if (function_exists('wp_schedule_event')) {
+    register_activation_hook(__FILE__, function() {
+        if (!wp_next_scheduled('ativ_send_alert_emails')) {
+            wp_schedule_event(time(), 'hourly', 'ativ_send_alert_emails');
+        }
+    });
+    
+    register_deactivation_hook(__FILE__, function() {
+        wp_clear_scheduled_hook('ativ_send_alert_emails');
+    });
+    
+    add_action('ativ_send_alert_emails', function() {
+        AmateurTelsizIlanVitrini::send_alert_emails();
+    });
+}
+
+// Manual test için AJAX endpoint
+add_action('wp_ajax_ativ_test_send_alerts', function() {
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error(['message' => 'Yönetici izni gerekli']);
+        wp_die();
+    }
+    
+    AmateurTelsizIlanVitrini::send_alert_emails();
+    wp_send_json_success(['message' => 'E-posta uyarıları kontrol edildi ve gönderildiyse gönderildi.']);
+});
 
 new AmateurTelsizIlanVitrini();
 ?>

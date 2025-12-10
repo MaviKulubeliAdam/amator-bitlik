@@ -64,6 +64,10 @@
                     'name' => 'Yöneticiye İlan Güncelleme Bildirimi',
                     'body' => sanitize_textarea_field($_POST['mail_template_admin_listing_updated'] ?? '')
                 ),
+                'alert_email' => array(
+                    'name' => 'Arama Uyarısı E-postası',
+                    'body' => sanitize_textarea_field($_POST['mail_template_alert_email'] ?? '')
+                ),
                 'user_terms' => array(
                     'name' => 'Kullanıcı Sözleşmesi',
                     'body' => wp_kses_post($_POST['ativ_terms_text'] ?? '')
@@ -123,6 +127,7 @@
         $mail_template_listing_deleted_by_admin = $this->get_template_body('listing_deleted_by_admin', 'deleted_by_admin');
         $mail_template_admin_new_listing = $this->get_template_body('admin_new_listing', 'admin_new_listing');
         $mail_template_admin_listing_updated = $this->get_template_body('admin_listing_updated', 'admin_listing_updated');
+        $mail_template_alert_email = $this->get_template_body('alert_email', 'alert_email');
 
         // Lokalizasyon için ülkeler
         $cities_table = $wpdb->prefix . 'amator_bitlik_sehirler';
@@ -478,6 +483,24 @@
                         <label for="mail_template_admin_listing_updated">Reddedilen/onaylı ilan güncellendiğinde yöneticiye gönderilecek e-posta</label>
                         <textarea id="mail_template_admin_listing_updated" name="mail_template_admin_listing_updated"><?php echo esc_textarea($mail_template_admin_listing_updated); ?></textarea>
                     </div>
+                    
+                    <hr style="margin: 40px 0; border: none; border-top: 2px solid #ddd;">
+                    
+                    <h3 style="margin-top: 30px; color: #0073aa;">🔔 Arama Uyarısı E-postası</h3>
+                    <p style="color: #666; margin-bottom: 20px;">Kullanıcılara gönderilecek arama uyarısı e-posta şablonu.</p>
+                    
+                    <div class="ativ-template-variables">
+                        <strong>Arama Uyarısı E-postası için Kullanılabilir Değişkenler:</strong><br>
+                        {alert_name} - Uyarı adı<br>
+                        {listing_count} - Bulunan ilan sayısı<br>
+                        {listings_html} - Bulunan ilanların HTML listesi<br>
+                        {site_url} - Platform URL'i
+                    </div>
+                    
+                    <div class="ativ-form-group">
+                        <label for="mail_template_alert_email">Arama uyarısı için gönderilecek e-posta</label>
+                        <textarea id="mail_template_alert_email" name="mail_template_alert_email"><?php echo esc_textarea($mail_template_alert_email); ?></textarea>
+                    </div>
                 </div>
                 
                 <!-- Lokalizasyon Sekmesi -->
@@ -599,6 +622,12 @@
                         <p style="margin-bottom: 15px;">Manuel olarak döviz kurlarını güncellemek için aşağıdaki butona tıkla:</p>
                         <button type="button" class="ativ-btn-primary" onclick="testExchangeRateUpdate()">🔄 Döviz Kurlarını Şimdi Güncelle</button>
                         <div id="test-result" style="margin-top: 15px; padding: 15px; border-radius: 4px; display: none;"></div>
+                        
+                        <hr style="margin: 30px 0;">
+                        
+                        <p style="margin-bottom: 15px;">Arama uyarılarını manuel olarak tetiklemek için:</p>
+                        <button type="button" class="ativ-btn-primary" onclick="testSendAlerts()">📧 E-posta Uyarılarını Test Et</button>
+                        <div id="alert-test-result" style="margin-top: 15px; padding: 15px; border-radius: 4px; display: none;"></div>
                     </div>
                     
                     <script>
@@ -641,6 +670,48 @@
                             resultDiv.style.display = 'block';
                             btn.disabled = false;
                             btn.textContent = '🔄 Döviz Kurlarını Şimdi Güncelle';
+                        });
+                    }
+                    
+                    function testSendAlerts() {
+                        const btn = event.target;
+                        btn.disabled = true;
+                        btn.textContent = '⏳ Test ediliyor...';
+                        
+                        fetch(ajaxurl, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded',
+                            },
+                            body: 'action=ativ_test_send_alerts'
+                        })
+                        .then(r => r.json())
+                        .then(data => {
+                            const resultDiv = document.getElementById('alert-test-result');
+                            if (data.success) {
+                                resultDiv.style.background = '#d4edda';
+                                resultDiv.style.color = '#155724';
+                                resultDiv.style.border = '1px solid #c3e6cb';
+                                resultDiv.innerHTML = '<strong>✅ Başarılı!</strong><br>' + data.data.message;
+                            } else {
+                                resultDiv.style.background = '#f8d7da';
+                                resultDiv.style.color = '#721c24';
+                                resultDiv.style.border = '1px solid #f5c6cb';
+                                resultDiv.innerHTML = '<strong>❌ Hata!</strong><br>' + (data.data?.message || JSON.stringify(data.data));
+                            }
+                            resultDiv.style.display = 'block';
+                            btn.disabled = false;
+                            btn.textContent = '📧 E-posta Uyarılarını Test Et';
+                        })
+                        .catch(err => {
+                            const resultDiv = document.getElementById('alert-test-result');
+                            resultDiv.style.background = '#f8d7da';
+                            resultDiv.style.color = '#721c24';
+                            resultDiv.style.border = '1px solid #f5c6cb';
+                            resultDiv.innerHTML = '<strong>❌ Ağ Hatası!</strong><br>' + err.message;
+                            resultDiv.style.display = 'block';
+                            btn.disabled = false;
+                            btn.textContent = '📧 E-posta Uyarılarını Test Et';
                         });
                     }
                     </script>

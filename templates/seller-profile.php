@@ -1157,6 +1157,13 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('searchAlertModal').style.display = 'none';
         });
 
+        // Dışarı tıklanınca modal kapanması
+        document.getElementById('searchAlertModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.style.display = 'none';
+            }
+        });
+
         // Yeni arama uyarısı formu (çift bağlanmayı önlemek için guard)
         const allListingsCheckbox = document.getElementById('alertAllListings');
         const keywordInput = document.getElementById('alertKeyword');
