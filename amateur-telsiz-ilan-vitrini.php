@@ -50,11 +50,14 @@ function ativ_create_tables() {
     dbDelta($sql);
     
     // Mevcut tabloya kolonları ekle (güncelleme için)
-    $row = $wpdb->get_results("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = '$table_name' AND COLUMN_NAME = 'is_banned'");
+    $row = $wpdb->get_results($wpdb->prepare("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = %s AND COLUMN_NAME = 'is_banned'", $table_name));
     if(empty($row)){
-        $wpdb->query("ALTER TABLE $table_name ADD is_banned TINYINT(1) DEFAULT 0");
-        $wpdb->query("ALTER TABLE $table_name ADD ban_reason TEXT");
-        $wpdb->query("ALTER TABLE $table_name ADD banned_at DATETIME");
+        // Table name is validated through wpdb->prefix which is safe - using backticks for SQL safety
+        $wpdb->query("ALTER TABLE `{$table_name}` ADD COLUMN is_banned TINYINT(1) DEFAULT 0");
+        // Adding ban_reason column for storing ban explanation
+        $wpdb->query("ALTER TABLE `{$table_name}` ADD COLUMN ban_reason TEXT");
+        // Adding banned_at column for tracking ban timestamp
+        $wpdb->query("ALTER TABLE `{$table_name}` ADD COLUMN banned_at DATETIME");
     }
 }
 
@@ -85,40 +88,7 @@ function ativ_create_upload_dir() {
     }
 }
 
-// Kullanıcılar tablosu oluşturma
-register_activation_hook(__FILE__, function() {
-    global $wpdb;
-    $table_name = $wpdb->prefix . 'amator_bitlik_kullanıcılar';
-    $charset_collate = $wpdb->get_charset_collate();
-    $sql = "CREATE TABLE IF NOT EXISTS $table_name (
-        id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-        user_id BIGINT(20) UNSIGNED NOT NULL,
-        callsign VARCHAR(50) NOT NULL,
-        name VARCHAR(100) NOT NULL,
-        email VARCHAR(100) NOT NULL,
-        location VARCHAR(100) NOT NULL,
-        phone VARCHAR(20) NOT NULL,
-        is_banned TINYINT(1) DEFAULT 0,
-        ban_reason TEXT,
-        banned_at DATETIME,
-        PRIMARY KEY (id),
-        KEY user_id (user_id)
-    ) $charset_collate;";
-    require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-    dbDelta($sql);
-    
-    // Mevcut tabloya kolonları ekle (güncelleme için)
-    $row = $wpdb->get_results("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = '$table_name' AND COLUMN_NAME = 'is_banned'");
-    if(empty($row)){
-        $wpdb->query("ALTER TABLE $table_name ADD is_banned TINYINT(1) DEFAULT 0");
-        $wpdb->query("ALTER TABLE $table_name ADD ban_reason TEXT");
-        $wpdb->query("ALTER TABLE $table_name ADD banned_at DATETIME");
-    }
-    
-    // İlan detay sayfası için rewrite rules
-    add_rewrite_rule('^ilan/([0-9]+)/?$', 'index.php?listing_detail=$matches[1]', 'top');
-    flush_rewrite_rules();
-});
+// Kullanıcılar tablosu oluşturma - Not: This is now handled by ativ_activate_plugin function above
 
 // AJAX ile kullanıcı kaydı ekleme
 add_action('wp_ajax_amator_bitlik_add_user', function() {
@@ -236,28 +206,27 @@ register_activation_hook(__FILE__, function() {
     dbDelta($email_records_sql);
 });
 
+// Helper function to get cities from database
+function ativ_get_cities_from_db() {
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'amator_bitlik_sehirler';
+    $selected_country = get_option('ativ_location_country', 'all');
+    if ($selected_country && $selected_country !== 'all') {
+        $rows = $wpdb->get_results($wpdb->prepare("SELECT il_adi, ulke FROM `{$table_name}` WHERE ulke = %s ORDER BY il_adi ASC", $selected_country), ARRAY_A);
+    } else {
+        $rows = $wpdb->get_results("SELECT il_adi, ulke FROM `{$table_name}` ORDER BY il_adi ASC", ARRAY_A);
+    }
+    return $rows ?: [];
+}
+
 // Şehirleri JSON dönen AJAX endpoint
 add_action('wp_ajax_ativ_get_cities', function() {
-    global $wpdb;
-    $table_name = $wpdb->prefix . 'amator_bitlik_sehirler';
-    $selected_country = get_option('ativ_location_country', 'all');
-    if ($selected_country && $selected_country !== 'all') {
-        $rows = $wpdb->get_results($wpdb->prepare("SELECT il_adi, ulke FROM $table_name WHERE ulke = %s ORDER BY il_adi ASC", $selected_country), ARRAY_A);
-    } else {
-        $rows = $wpdb->get_results("SELECT il_adi, ulke FROM $table_name ORDER BY il_adi ASC", ARRAY_A);
-    }
-    wp_send_json_success($rows ?: []);
+    $cities = ativ_get_cities_from_db();
+    wp_send_json_success($cities);
 });
 add_action('wp_ajax_nopriv_ativ_get_cities', function() {
-    global $wpdb;
-    $table_name = $wpdb->prefix . 'amator_bitlik_sehirler';
-    $selected_country = get_option('ativ_location_country', 'all');
-    if ($selected_country && $selected_country !== 'all') {
-        $rows = $wpdb->get_results($wpdb->prepare("SELECT il_adi, ulke FROM $table_name WHERE ulke = %s ORDER BY il_adi ASC", $selected_country), ARRAY_A);
-    } else {
-        $rows = $wpdb->get_results("SELECT il_adi, ulke FROM $table_name ORDER BY il_adi ASC", ARRAY_A);
-    }
-    wp_send_json_success($rows ?: []);
+    $cities = ativ_get_cities_from_db();
+    wp_send_json_success($cities);
 });
 
 // (Lokalizasyon sayfası eklenti menüsüne taşındı - add_admin_menu üzerinden ekleniyor)
