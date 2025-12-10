@@ -110,13 +110,20 @@
         <?php else: ?>
           <?php foreach ($my_listings as $listing):
             $image_url = '';
-            if (!empty($listing['images']) && is_array($listing['images'])) {
-              $featured_index = intval($listing['featured_image_index'] ?? 0);
-              $featured_img = $listing['images'][$featured_index] ?? $listing['images'][0] ?? null;
-              if ($featured_img && !empty($featured_img['data'])) {
-                $image_url = $featured_img['data'];
-              } elseif ($featured_img && !empty($featured_img['name'])) {
-                $image_url = ATIV_UPLOAD_URL . $listing['id'] . '/' . $featured_img['name'];
+            // images sütunu JSON string olarak gelir
+            if (!empty($listing['images'])) {
+              $images = is_array($listing['images']) ? $listing['images'] : json_decode($listing['images'], true);
+              if (is_array($images) && !empty($images)) {
+                $featured_index = intval($listing['featured_image_index'] ?? 0);
+                $featured_img = $images[$featured_index] ?? $images[0] ?? null;
+                if ($featured_img) {
+                  // Eğer tam URL ise direkt kullan, değilse dosya adı olarak ele al
+                  if (strpos($featured_img, 'http') === 0) {
+                    $image_url = $featured_img;
+                  } else {
+                    $image_url = ATIV_UPLOAD_URL . $listing['id'] . '/' . $featured_img;
+                  }
+                }
               }
             }
           ?>

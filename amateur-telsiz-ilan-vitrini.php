@@ -8,6 +8,12 @@
  * Domain Path: /languages
  */
 
+// Plugin constants
+define('ATIV_PLUGIN_PATH', plugin_dir_path(__FILE__));
+define('ATIV_PLUGIN_URL', plugin_dir_url(__FILE__));
+define('ATIV_UPLOAD_DIR', ATIV_PLUGIN_PATH . 'uploads/');
+define('ATIV_UPLOAD_URL', ATIV_PLUGIN_URL . 'uploads/');
+
 // Kullanıcılar tablosu oluşturma
 register_activation_hook(__FILE__, function() {
     global $wpdb;
@@ -37,6 +43,10 @@ register_activation_hook(__FILE__, function() {
         $wpdb->query("ALTER TABLE $table_name ADD ban_reason TEXT");
         $wpdb->query("ALTER TABLE $table_name ADD banned_at DATETIME");
     }
+    
+    // İlan detay sayfası için rewrite rules
+    add_rewrite_rule('^ilan/([0-9]+)/?$', 'index.php?listing_detail=$matches[1]', 'top');
+    flush_rewrite_rules();
 });
 
 // AJAX ile kullanıcı kaydı ekleme
@@ -188,12 +198,6 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-// Eklenti sabitleri
-define('ATIV_PLUGIN_URL', plugin_dir_url(__FILE__));
-define('ATIV_PLUGIN_PATH', plugin_dir_path(__FILE__));
-define('ATIV_UPLOAD_DIR', WP_CONTENT_DIR . '/plugins/amator-bitlik/uploads/');
-define('ATIV_UPLOAD_URL', content_url() . '/plugins/amator-bitlik/uploads/');
-
 class AmateurTelsizIlanVitrini {
     
     public function __construct() {
@@ -213,6 +217,10 @@ class AmateurTelsizIlanVitrini {
         
         // Döviz kuru güncelleme hook'u
         add_action('ativ_update_exchange_rates', array($this, 'update_exchange_rates_from_api'));
+        
+        // İlan detay sayfası için query variable ve template
+        add_filter('query_vars', array($this, 'add_query_vars'));
+        add_filter('template_include', array($this, 'load_listing_detail_template'));
     }
     
     /**
@@ -223,6 +231,9 @@ class AmateurTelsizIlanVitrini {
     }
     
     public function init() {
+        // İlan detay sayfası URL rewrite - DOĞRU FORMAT
+        add_rewrite_rule('^ilan/([0-9]+)/?$', 'index.php?listing_detail=$matches[1]', 'top');
+        
         // AJAX işleyicileri kaydet
         add_action('wp_ajax_ativ_ajax', array($this, 'handle_ajax'));
         add_action('wp_ajax_nopriv_ativ_ajax', array($this, 'handle_ajax'));
@@ -297,6 +308,41 @@ class AmateurTelsizIlanVitrini {
         }
         
         flush_rewrite_rules();
+    }
+    
+    /**
+     * Query variable'ını kaydet
+     */
+    public function add_query_vars($vars) {
+        $vars[] = 'listing_detail';
+        return $vars;
+    }
+    
+    /**
+     * İlan detay sayfası template'ini yükle
+     */
+    public function load_listing_detail_template($template) {
+        global $wp_query;
+        
+        // Hem query_vars hem de $_GET'den kontrol et
+        $listing_id = $wp_query->query_vars['listing_detail'] ?? $_GET['listing_detail'] ?? null;
+        
+        error_log('[TEMPLATE DEBUG] Query vars: ' . print_r($wp_query->query_vars, true));
+        error_log('[TEMPLATE DEBUG] Listing ID: ' . $listing_id);
+        error_log('[TEMPLATE DEBUG] Current template: ' . $template);
+        
+        if ($listing_id) {
+            // İlan detay template'ini kullan
+            $listing_template = ATIV_PLUGIN_PATH . 'templates/listing-detail.php';
+            error_log('[TEMPLATE DEBUG] Looking for template: ' . $listing_template);
+            error_log('[TEMPLATE DEBUG] File exists: ' . (file_exists($listing_template) ? 'YES' : 'NO'));
+            
+            if (file_exists($listing_template)) {
+                error_log('[TEMPLATE DEBUG] Loading listing detail template');
+                return $listing_template;
+            }
+        }
+        return $template;
     }
     
     private function create_upload_dir() {
@@ -1525,9 +1571,16 @@ class AmateurTelsizIlanVitrini {
     private function get_listings() {
     global $wpdb;
     $table_name = $wpdb->prefix . 'amator_ilanlar';
+    $users_table = $wpdb->prefix . 'amator_bitlik_kullanıcılar';
     
-    // Yalnızca onaylı ilanları göster
-    $listings = $wpdb->get_results("SELECT * FROM $table_name WHERE status = 'approved' ORDER BY created_at DESC", ARRAY_A);
+    // Yalnızca onaylı ilanları göster VE ilanın sahibi yasaklı değilse
+    $listings = $wpdb->get_results(
+        "SELECT l.* FROM $table_name l
+         LEFT JOIN $users_table u ON l.user_id = u.user_id
+         WHERE l.status = 'approved' AND (u.is_banned IS NULL OR u.is_banned = 0)
+         ORDER BY l.created_at DESC",
+        ARRAY_A
+    );
     
     if ($wpdb->last_error) {
         wp_send_json_error('Veritabanı hatası: ' . $wpdb->last_error);

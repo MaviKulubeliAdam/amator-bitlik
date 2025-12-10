@@ -808,6 +808,7 @@ $total_listings = $wpdb->get_var("SELECT COUNT(*) FROM $listings_table");
                                 <th>Fiyat</th>
                                 <th>Durum</th>
                                 <th>Tarih</th>
+                                <th style="text-align:center;">İşlem</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -850,6 +851,7 @@ $total_listings = $wpdb->get_var("SELECT COUNT(*) FROM $listings_table");
                             <td><strong>${price} ${currency}</strong></td>
                             <td><span class="ativ-listing-status-badge ${statusClass}">${statusText}</span></td>
                             <td>${date}</td>
+                            <td><a href="/ilan/${listing.id}/" target="_blank" style="padding:4px 8px; background:#667eea; color:white; border-radius:4px; text-decoration:none; font-size:12px;">🔗 Aç</a></td>
                         </tr>
                     `;
                 });

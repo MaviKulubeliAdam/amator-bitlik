@@ -453,11 +453,38 @@ function createListingCard(listing) {
     let displayImage;
     let imageCountBadge = '';
     
-    if (listing.images && listing.images.length > 0) {
+    // images field JSON string veya array olabilir
+    let images = [];
+    if (listing.images) {
+        if (typeof listing.images === 'string') {
+            try {
+                images = JSON.parse(listing.images);
+            } catch (e) {
+                images = [];
+            }
+        } else if (Array.isArray(listing.images)) {
+            images = listing.images;
+        }
+    }
+    
+    if (images && images.length > 0) {
         const featuredIndex = listing.featured_image_index || 0;
-        displayImage = `<img src="${escapeHtml(listing.images[featuredIndex].data)}" alt="${escapeHtml(listing.title)}">`;
-        if (listing.images.length > 1) {
-            imageCountBadge = `<div class="image-count-badge">${listing.images.length} 📷</div>`;
+        let imageUrl;
+        
+        // Eğer images array'daki item string ise (dosya adı), URL oluştur
+        if (typeof images[featuredIndex] === 'string') {
+            imageUrl = (ativ_ajax?.upload_url || '/wp-content/uploads/amator-bitlik/') + listing.id + '/' + images[featuredIndex];
+        } else if (typeof images[featuredIndex] === 'object' && images[featuredIndex].data) {
+            // Eski format - tam URL
+            imageUrl = images[featuredIndex].data;
+        } else {
+            // Fallback
+            imageUrl = images[featuredIndex];
+        }
+        
+        displayImage = `<img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(listing.title)}">`;
+        if (images.length > 1) {
+            imageCountBadge = `<div class="image-count-badge">${images.length} 📷</div>`;
         }
     } else {
         displayImage = escapeHtml(listing.emoji || '📻');
