@@ -1,6 +1,6 @@
 # Amatör Bitlik – İlan Vitrini Eklentisi
 
-Amatör telsiz ekipman ilanlarını WordPress üzerinde kolayca yönetmek için geliştirilmiş ilan vitrini eklentisi. Çoklu para birimi, SMTP e-posta bildirimleri, yönetici akışları (onay/red/silme), kullanıcı arayüzü ve şablon yönetimi içerir.
+Amatör telsiz ekipman ilanlarını WordPress üzerinde kolayca yönetmek için geliştirilmiş ilan vitrini eklentisi. Çoklu para birimi, SMTP e-posta bildirimleri, yönetici akışları (onay/red/silme), kullanıcı arayüzü ve şablon yönetimi içerir. Son güncellemeler: modern ilan detay sayfası, otomatik permalink yenileme, ilan başlığına zorlanan SEO başlığı ve geliştirilmiş ışık kutusu (overlay tıkla-kapat).
 
 ## Özellikler
 - Çoklu para birimi desteği ve TL otomatik dönüşüm
@@ -11,12 +11,16 @@ Amatör telsiz ekipman ilanlarını WordPress üzerinde kolayca yönetmek için 
 - E-posta şablonları veritabanında tutularak özelleştirilebilir, varsayılanlara geri düşme
 - “Benim İlanlarım” sayfasında durum rozetleri, red nedeni ve düzenleme akışı
 - Yönetici panelinde ilan düzenleme, reddetme ve silme (silme nedeni modalı)
+- Modern ilan detay sayfası: responsive grid, galeri + lightbox, video desteği
+- Lightbox overlay tıklayınca kapanır; galeri klavye yön tuşlarını destekler
+- İlan başlığı otomatik olarak sayfa/SEO başlığına zorlanır (Elementor/Yoast uyumlu)
+- Eklenti etkinleşince rewrite kuralları otomatik flush edilir (permalink kaydetmeye gerek yok)
 
 ## Kurulum
 1. WordPress kurulumunuzda eklenti klasörünü yükleyin.
 2. Eklenti dosyası: `amateur-telsiz-ilan-vitrini.php`.
 3. Yönetim panelinden eklentiyi etkinleştirin.
-4. İlk etkinleştirmede gerekli tablolar ve varsayılan e-posta şablonları oluşturulur:
+4. Etkinleştirme sırasında gerekli tablolar, varsayılan e-posta şablonları ve permalink rewrite kuralları otomatik oluşturulur (flush yapılır):
 	 - `wp_amator_ilanlar`
 	 - `wp_amator_telsiz_ayarlar`
 	 - `wp_amator_telsiz_sablonlar`
@@ -55,6 +59,7 @@ Notlar:
 ## Kullanıcı Arayüzü
 - `templates/index.php`: Listeleme ana sayfası (arama/filtre vb.)
 - `templates/my-listings.php`: Kullanıcının ilanları, durum rozetleri, red nedeni ve düzenleme/silme butonları.
+- `templates/listing-detail.php`: Modern ilan detay sayfası, galeri+video lightbox
 - Red nedeni, “Red Nedeni: çünkü …” biçiminde tek satır hizalı gösterilir.
 
 ## Yönetici Paneli
@@ -96,16 +101,17 @@ css/
 	base.css
 	components.css
 	forms.css
-	style.css
 js/
 	core.js
 	modal.js
-	script.js
+	profile.js
+	terms.js
 	ui.js
 templates/
 	index.php
 	my-listings.php
 	partial-modal.php
+	listing-detail.php
 languages/
 	amator-bitlik.pot          # Çeviri şablon dosyası
 	amator-bitlik-tr_TR.po     # Türkçe çeviri
