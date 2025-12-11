@@ -456,10 +456,19 @@ function showLoginRequiredModal() {
   }
 }
 
+// Global değişkenler - Kullanıcı verileri için
+let userData = {
+  callsign: '',
+  name: '',
+  email: '',
+  location: '',
+  phone: ''
+};
+
 /**
- * Kullanıcının çağrı işaretini veritabanından yükler
+ * Kullanıcının tüm bilgilerini veritabanından yükler
  */
-async function loadUserCallsign() {
+async function loadUserData() {
   try {
     const formData = new FormData();
     formData.append('action', 'ativ_ajax');
@@ -477,17 +486,32 @@ async function loadUserCallsign() {
     
     const result = await response.json();
     
-    if (result.success && result.data && result.data.callsign) {
-      userCallsign = result.data.callsign;
-      return result.data.callsign;
+    if (result.success && result.data) {
+      // Tüm kullanıcı verilerini kaydet
+      userData.callsign = result.data.callsign || '';
+      userData.name = result.data.name || '';
+      userData.email = result.data.email || '';
+      userData.location = result.data.location || '';
+      userData.phone = result.data.phone || '';
+      
+      // Eski değişkeni de güncelle (geriye uyumluluk için)
+      userCallsign = userData.callsign;
+      
+      return userData;
     } else {
-      console.warn('Çağrı işareti yükleme başarısız:', result);
+      console.warn('Kullanıcı verileri yükleme başarısız:', result);
       return null;
     }
   } catch (error) {
-    console.error('Çağrı işareti yüklenirken hata:', error);
+    console.error('Kullanıcı verileri yüklenirken hata:', error);
     return null;
   }
+}
+
+// Geriye uyumluluk için eski fonksiyon adını koruyalım
+async function loadUserCallsign() {
+  const data = await loadUserData();
+  return data ? data.callsign : null;
 }
 
 /**
@@ -516,13 +540,24 @@ async function openAddListingModal() {
     document.querySelector('.modal-header h2').textContent = 'Yeni İlan Ekle';
     document.getElementById('formSubmitBtn').textContent = 'İlanı Yayınla';
     
-    // Kullanıcının çağrı işaretini veritabanından al ve otomatik doldur
-    await loadUserCallsign();
+    // Kullanıcının tüm bilgilerini veritabanından al
+    await loadUserData();
+    
+    // Kullanıcı bilgilerini formdaki gizli alanlara doldur
+    if (userData.name) document.getElementById('formSellerName').value = userData.name;
+    if (userData.location) document.getElementById('formLocation').value = userData.location;
+    if (userData.email) document.getElementById('formEmail').value = userData.email;
+    
+    // Telefonu parse et ve doldur
+    if (userData.phone) {
+      const phoneData = parsePhoneNumber(userData.phone);
+      populateCountryCodes(phoneData.dialCode);
+      document.getElementById('formPhone').value = formatPhoneNumber(phoneData.number);
+    } else {
+      populateCountryCodes('+90');
+    }
     
     updatePreview();
-    
-    // Ülke kodlarını doldur (varsayılan Türkiye)
-    populateCountryCodes('+90');
     
     // Şehir listesini yükle
     loadCities();
@@ -535,16 +570,29 @@ async function openAddListingModal() {
     // Hata olsa bile devam et
     editingListing = null;
     
-    // Kullanıcının çağrı işaretini veritabanından al
-    await loadUserCallsign();
+    // Kullanıcının tüm bilgilerini veritabanından al
+    await loadUserData();
     
     document.getElementById('addListingModal').style.display = 'flex';
     document.body.style.overflow = 'hidden';
     document.querySelector('.modal-header h2').textContent = 'Yeni İlan Ekle';
     document.getElementById('formSubmitBtn').textContent = 'İlanı Yayınla';
     
+    // Kullanıcı bilgilerini formdaki gizli alanlara doldur
+    if (userData.name) document.getElementById('formSellerName').value = userData.name;
+    if (userData.location) document.getElementById('formLocation').value = userData.location;
+    if (userData.email) document.getElementById('formEmail').value = userData.email;
+    
+    // Telefonu parse et ve doldur
+    if (userData.phone) {
+      const phoneData = parsePhoneNumber(userData.phone);
+      populateCountryCodes(phoneData.dialCode);
+      document.getElementById('formPhone').value = formatPhoneNumber(phoneData.number);
+    } else {
+      populateCountryCodes('+90');
+    }
+    
     updatePreview();
-    populateCountryCodes('+90');
     loadCities();
     setupCategoryDropdown();
     setupConditionDropdown();
@@ -589,8 +637,21 @@ async function openEditListingModal(listingOrId) {
   document.getElementById('formCurrency').value = listing.currency || 'TRY';
   document.getElementById('formDescription').value = listing.description || '';
   
-  // Çağrı işaretini veritabanından al (ilan üzerindeki değil, kullanıcı tablosundaki)
-  await loadUserCallsign();
+  // Çağrı işaretini ve diğer kullanıcı bilgilerini veritabanından al
+  await loadUserData();
+  
+  // Kullanıcı bilgilerini formdaki gizli alanlara doldur
+  if (userData.name) document.getElementById('formSellerName').value = userData.name;
+  if (userData.location) document.getElementById('formLocation').value = userData.location;
+  if (userData.email) document.getElementById('formEmail').value = userData.email;
+  
+  // Telefonu parse et ve doldur - veritabanından gelen kullanıcı bilgisini kullan
+  if (userData.phone) {
+    const phoneData = parsePhoneNumber(userData.phone);
+    populateCountryCodes(phoneData.dialCode);
+    document.getElementById('formPhone').value = formatPhoneNumber(phoneData.number);
+  }
+  
   // Edit modda: DB çağrısı başarısızsa, ilandaki callsign'ı fallback olarak kullan
   if (!userCallsign || userCallsign === '' || userCallsign === null) {
     if (listing && listing.callsign) {
@@ -659,11 +720,6 @@ async function openEditListingModal(listingOrId) {
     console.log('Condition hidden set:', conditionHidden.value);
   }
   console.log('✅ Values set complete');
-  
-  // Telefonu parse et ve alanları doldur
-  const phoneData = parsePhoneNumber(listing.seller_phone || '');
-  populateCountryCodes(phoneData.dialCode);
-  document.getElementById('formPhone').value = formatPhoneNumber(phoneData.number);
 
   // Normalize images for previews: stored images may be strings (filenames) or objects
   uploadedImages.forEach(img => { if (img && img.previewUrl) URL.revokeObjectURL(img.previewUrl); });
@@ -965,7 +1021,7 @@ async function handleFormSubmit(e) {
     featuredImageIndex: featuredImageIndex,
     video: isEditing && editingListing && editingListing.video ? editingListing.video : null, // Mevcut video URL'si (değiştirilmezse)
     emoji: uploadedImages.length > 0 ? null : "📻",
-    callsign: callsign,
+    callsign: userCallsign,
     seller_name: document.getElementById('formSellerName').value.trim(),
     location: document.getElementById('formLocation').value.trim(),
     seller_email: document.getElementById('formEmail').value.trim(),
@@ -2351,7 +2407,15 @@ window.editMyListing = async function(id) {
         document.getElementById('formPrice').value = listing.price || '';
         document.getElementById('formCurrency').value = listing.currency || 'TRY';
         document.getElementById('formDescription').value = listing.description || '';
-        // Satıcı alanları formdan kaldırıldı; preview ve kayıt DB verisiyle yapılır
+        // Satıcı alanları formdan kaldırıldı; veritabanından çekilecek
+        
+        // Kullanıcı bilgilerini veritabanından al
+        await loadUserData();
+        
+        // Kullanıcı bilgilerini formdaki gizli alanlara doldur
+        if (userData.name) document.getElementById('formSellerName').value = userData.name;
+        if (userData.location) document.getElementById('formLocation').value = userData.location;
+        if (userData.email) document.getElementById('formEmail').value = userData.email;
         
         // Dropdown'ları kur
         setupCategoryDropdown();
@@ -2368,10 +2432,12 @@ window.editMyListing = async function(id) {
         if (conditionInput) conditionInput.value = conditionLabel;
         if (conditionHidden) conditionHidden.value = conditionValue;
         
-        // Telefonu parse et ve alanları doldur
-        const phoneData = parsePhoneNumber(listing.seller_phone || '');
-        populateCountryCodes(phoneData.dialCode);
-        document.getElementById('formPhone').value = formatPhoneNumber(phoneData.number);
+        // Telefonu parse et ve doldur - veritabanından gelen kullanıcı bilgisini kullan
+        if (userData.phone) {
+          const phoneData = parsePhoneNumber(userData.phone);
+          populateCountryCodes(phoneData.dialCode);
+          document.getElementById('formPhone').value = formatPhoneNumber(phoneData.number);
+        }
         
         // Modal başlığı ve submit butonunu özelleştir
         document.querySelector('.modal-header h2').textContent = 'Red Edilen İlanı Düzenle';
