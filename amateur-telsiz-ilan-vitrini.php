@@ -1168,11 +1168,13 @@ class AmateurTelsizIlanVitrini {
      */
     private function get_user_callsign($user_id) {
         global $wpdb;
+        
+        // Tablo adını güvenli şekilde oluştur
         $users_table = $wpdb->prefix . 'amator_bitlik_kullanıcılar';
         
-        // Veritabanından kullanıcı bilgilerini çek
+        // Prepared statement kullanarak sorgu
         $db_user = $wpdb->get_row($wpdb->prepare(
-            "SELECT callsign FROM $users_table WHERE user_id = %d",
+            "SELECT callsign FROM `{$users_table}` WHERE user_id = %d",
             $user_id
         ));
 

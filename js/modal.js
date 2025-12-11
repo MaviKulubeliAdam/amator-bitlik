@@ -503,8 +503,10 @@ async function openAddListingModal() {
     return;
   }
   
-  // Kullanıcının yasaklı olup olmadığını kontrol et
-  checkUserBanStatus().then(async banData => {
+  try {
+    // Kullanıcının yasaklı olup olmadığını kontrol et
+    const banData = await checkUserBanStatus();
+    
     if (banData.is_banned) {
       showBannedUserModal(banData.ban_reason, banData.banned_at);
       return;
@@ -531,7 +533,7 @@ async function openAddListingModal() {
     // Kategori ve durum dropdown'larını ayarla
     setupCategoryDropdown();
     setupConditionDropdown();
-  }).catch(async error => {
+  } catch (error) {
     console.error('Ban kontrolü hatası:', error);
     // Hata olsa bile devam et
     editingListing = null;
@@ -548,7 +550,7 @@ async function openAddListingModal() {
     loadCities();
     setupCategoryDropdown();
     setupConditionDropdown();
-  });
+  }
 }
 
 /**
