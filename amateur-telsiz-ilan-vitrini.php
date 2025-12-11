@@ -1166,18 +1166,30 @@ class AmateurTelsizIlanVitrini {
         global $wpdb;
         $users_table = $wpdb->prefix . 'amator_bitlik_kullanıcılar';
         
-        // Çağrı işaretini DB'den al
+        // Tüm kullanıcı verilerini DB'den al
         $user_data = $wpdb->get_row($wpdb->prepare(
-            "SELECT callsign FROM $users_table WHERE user_id = %d",
+            "SELECT callsign, name, email, location, phone FROM $users_table WHERE user_id = %d",
             $user_id
         ), ARRAY_A);
 
         $callsign = '';
+        $name = '';
+        $email = '';
+        $location = '';
+        $phone = '';
         
-        if ($user_data && !empty($user_data['callsign'])) {
-            $callsign = strtoupper(str_replace(' ', '', $user_data['callsign']));
-        } else {
-            // DB'de yoksa WordPress username'i kullan
+        if ($user_data) {
+            if (!empty($user_data['callsign'])) {
+                $callsign = strtoupper(str_replace(' ', '', $user_data['callsign']));
+            }
+            $name = !empty($user_data['name']) ? $user_data['name'] : '';
+            $email = !empty($user_data['email']) ? $user_data['email'] : '';
+            $location = !empty($user_data['location']) ? $user_data['location'] : '';
+            $phone = !empty($user_data['phone']) ? $user_data['phone'] : '';
+        }
+        
+        // DB'de çağrı işareti yoksa WordPress username'i kullan
+        if (empty($callsign)) {
             $user = get_user_by('id', $user_id);
             if ($user) {
                 $callsign = strtoupper(str_replace(' ', '', $user->user_login));
@@ -1185,7 +1197,13 @@ class AmateurTelsizIlanVitrini {
         }
 
         if (!empty($callsign)) {
-            wp_send_json_success(array('callsign' => $callsign));
+            wp_send_json_success(array(
+                'callsign' => $callsign,
+                'name' => $name,
+                'email' => $email,
+                'location' => $location,
+                'phone' => $phone
+            ));
         } else {
             wp_send_json_error('Çağrı işareti belirlenemiyor');
         }

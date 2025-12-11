@@ -62,22 +62,22 @@
      </div>
      
 <div class="form-group" style="display: none;"><label for="formCallsign">Çağrı İşareti</label> <input type="text" id="formCallsign" placeholder="Örn: TA1ABC"></div>
-     <div class="form-group"><label for="formSellerName">Ad Soyad *</label> <input type="text" id="formSellerName" required placeholder="Adınız ve soyadınız"></div>
-    <div class="form-group city-select-wrapper">
-      <label for="formLocation">Konum *</label>
+     <div class="form-group" style="display: none;"><label for="formSellerName">Ad Soyad</label> <input type="text" id="formSellerName" placeholder="Adınız ve soyadınız"></div>
+    <div class="form-group city-select-wrapper" style="display: none;">
+      <label for="formLocation">Konum</label>
       <div class="city-select-container">
-        <input type="text" id="formLocation" required placeholder="Şehir seçin veya yazın..." autocomplete="off">
+        <input type="text" id="formLocation" placeholder="Şehir seçin veya yazın..." autocomplete="off">
         <div class="city-dropdown" id="cityDropdown"></div>
       </div>
     </div>
-     <div class="form-group"><label for="formEmail">E-posta *</label> <input type="email" id="formEmail" required placeholder="ornek@email.com"></div>
-     <div class="form-group phone-group">
-      <label for="formPhone">Telefon *</label>
+     <div class="form-group" style="display: none;"><label for="formEmail">E-posta</label> <input type="email" id="formEmail" placeholder="ornek@email.com"></div>
+     <div class="form-group phone-group" style="display: none;">
+      <label for="formPhone">Telefon</label>
       <div class="phone-input-wrapper">
-        <select id="formCountryCode" class="country-code-select" required>
+        <select id="formCountryCode" class="country-code-select">
           <!-- Will be populated by JS -->
         </select>
-        <input type="tel" id="formPhone" required placeholder="555 123 4567" maxlength="13" pattern="[0-9\s]{10,13}">
+        <input type="tel" id="formPhone" placeholder="555 123 4567" maxlength="13" pattern="[0-9\s]{10,13}">
       </div>
       <small class="phone-hint">10 haneli numaranızı girin (başında 0 olmadan)</small>
      </div>
