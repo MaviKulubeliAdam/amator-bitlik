@@ -297,6 +297,7 @@ class AmateurTelsizIlanVitrini {
         add_action('wp_ajax_ban_user', array($this, 'ajax_ban_user'));
         add_action('wp_ajax_unban_user', array($this, 'ajax_unban_user'));
         add_action('wp_ajax_get_user_listings', array($this, 'ajax_get_user_listings'));
+        add_action('wp_ajax_get_user_callsign', array($this, 'ajax_get_user_callsign'));
         
         // Custom cron interval'ı tanımla (6 saat)
         add_filter('cron_schedules', array($this, 'add_custom_cron_schedules'));
@@ -1145,6 +1146,53 @@ class AmateurTelsizIlanVitrini {
     }
 
     /**
+     * Kullanıcının çağrı işaretini getir
+     */
+    public function ajax_get_user_callsign() {
+        if (!is_user_logged_in()) {
+            wp_send_json_error('Giriş yapmalısınız');
+        }
+
+        $user_id = get_current_user_id();
+        $callsign = $this->get_user_callsign($user_id);
+
+        wp_send_json_success(array('callsign' => $callsign));
+    }
+    
+    /**
+     * Kullanıcının çağrı işaretini veritabanından alır
+     * Önce amator_bitlik_kullanıcılar tablosundan, yoksa WordPress username'den
+     * 
+     * @param int $user_id WordPress kullanıcı ID'si
+     * @return string Çağrı işareti (büyük harfe çevrilmiş)
+     */
+    private function get_user_callsign($user_id) {
+        global $wpdb;
+        
+        // Tablo adını güvenli şekilde oluştur
+        $users_table = $wpdb->prefix . 'amator_bitlik_kullanıcılar';
+        
+        // Prepared statement kullanarak sorgu
+        $db_user = $wpdb->get_row($wpdb->prepare(
+            "SELECT callsign FROM `{$users_table}` WHERE user_id = %d",
+            $user_id
+        ));
+
+        // Çağrı işareti: önce DB'den, yoksa username'den
+        $callsign = '';
+        if ($db_user && !empty($db_user->callsign)) {
+            $callsign = $db_user->callsign;
+        } else {
+            $current_user = get_user_by('id', $user_id);
+            if ($current_user) {
+                $callsign = $current_user->user_login;
+            }
+        }
+        
+        return strtoupper(str_replace(' ', '', $callsign));
+    }
+
+    /**
      * Kullanıcıyı yasakla
      */
     public function ajax_ban_user() {
@@ -1825,8 +1873,11 @@ class AmateurTelsizIlanVitrini {
     $data = $_POST;
     $user_id = get_current_user_id();
     
-    // Gerekli alanları kontrol et
-    $required = ['title', 'category', 'brand', 'model', 'condition', 'price', 'description', 'callsign', 'seller_name', 'location', 'seller_email', 'seller_phone'];
+    // Kullanıcının çağrı işaretini veritabanından al
+    $callsign = $this->get_user_callsign($user_id);
+    
+    // Gerekli alanları kontrol et (callsign hariç, artık veritabanından alınıyor)
+    $required = ['title', 'category', 'brand', 'model', 'condition', 'price', 'description', 'seller_name', 'location', 'seller_email', 'seller_phone'];
     foreach ($required as $field) {
         if (empty($data[$field])) {
             wp_send_json_error("Eksik alan: $field");
@@ -1859,7 +1910,7 @@ class AmateurTelsizIlanVitrini {
         'featured_image_index' => 0,
         'video' => $video_url,
         'emoji' => $emoji,
-        'callsign' => sanitize_text_field($data['callsign']),
+        'callsign' => $callsign,  // Veritabanından alınan callsign kullanılıyor
         'seller_name' => sanitize_text_field($data['seller_name']),
         'location' => sanitize_text_field($data['location']),
         'seller_email' => sanitize_email($data['seller_email']),
@@ -2072,6 +2123,9 @@ class AmateurTelsizIlanVitrini {
         wp_send_json_error('Hesabınız yasaklı olduğu için ilan düzenleme yetkiniz yok');
     }
     
+    // Kullanıcının çağrı işaretini veritabanından al
+    $callsign = $this->get_user_callsign($user_id);
+    
     $table_name = $wpdb->prefix . 'amator_ilanlar';
     
     $id = intval($_POST['id'] ?? 0);
@@ -2104,7 +2158,6 @@ class AmateurTelsizIlanVitrini {
         'model' => 'model',
         'condition' => 'condition',
         'currency' => 'currency',
-        'callsign' => 'callsign',
         'seller_name' => 'seller_name',
         'location' => 'location',
         'seller_phone' => 'seller_phone'
@@ -2114,6 +2167,9 @@ class AmateurTelsizIlanVitrini {
             $update_data[$db_key] = sanitize_text_field($data[$post_key]);
         }
     }
+    
+    // Callsign'ı her zaman veritabanından al ve güncelle
+    $update_data['callsign'] = $callsign;
     if (array_key_exists('seller_email', $data)) {
         $update_data['seller_email'] = sanitize_email($data['seller_email']);
     }

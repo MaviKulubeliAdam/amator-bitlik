@@ -61,7 +61,7 @@
       <small id="videoStatusHint" style="color: #666; display: block; margin-top: 8px;"></small>
      </div>
      
-<div class="form-group"><label for="formCallsign">Çağrı İşareti *</label> <input type="text" id="formCallsign" required placeholder="Örn: TA1ABC"></div>
+<div class="form-group" style="display: none;"><label for="formCallsign">Çağrı İşareti</label> <input type="text" id="formCallsign" placeholder="Örn: TA1ABC"></div>
      <div class="form-group"><label for="formSellerName">Ad Soyad *</label> <input type="text" id="formSellerName" required placeholder="Adınız ve soyadınız"></div>
     <div class="form-group city-select-wrapper">
       <label for="formLocation">Konum *</label>
