@@ -1182,10 +1182,10 @@ class AmateurTelsizIlanVitrini {
             if (!empty($user_data['callsign'])) {
                 $callsign = strtoupper(str_replace(' ', '', $user_data['callsign']));
             }
-            $name = $user_data['name'] ?? '';
-            $email = $user_data['email'] ?? '';
-            $location = $user_data['location'] ?? '';
-            $phone = $user_data['phone'] ?? '';
+            $name = !empty($user_data['name']) ? $user_data['name'] : '';
+            $email = !empty($user_data['email']) ? $user_data['email'] : '';
+            $location = !empty($user_data['location']) ? $user_data['location'] : '';
+            $phone = !empty($user_data['phone']) ? $user_data['phone'] : '';
         }
         
         // DB'de çağrı işareti yoksa WordPress username'i kullan

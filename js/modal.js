@@ -518,16 +518,21 @@ async function loadUserCallsign() {
  * Kullanıcı verilerini form alanlarına doldurur
  */
 function populateUserDataFields() {
-  // Kullanıcı bilgilerini formdaki gizli alanlara doldur
-  if (userData.name) document.getElementById('formSellerName').value = userData.name;
-  if (userData.location) document.getElementById('formLocation').value = userData.location;
-  if (userData.email) document.getElementById('formEmail').value = userData.email;
+  // Kullanıcı bilgilerini formdaki gizli alanlara doldur (null check ile)
+  const sellerNameInput = document.getElementById('formSellerName');
+  const locationInput = document.getElementById('formLocation');
+  const emailInput = document.getElementById('formEmail');
+  const phoneInput = document.getElementById('formPhone');
+  
+  if (sellerNameInput && userData.name) sellerNameInput.value = userData.name;
+  if (locationInput && userData.location) locationInput.value = userData.location;
+  if (emailInput && userData.email) emailInput.value = userData.email;
   
   // Telefonu parse et ve doldur
-  if (userData.phone) {
+  if (phoneInput && userData.phone) {
     const phoneData = parsePhoneNumber(userData.phone);
     populateCountryCodes(phoneData.dialCode);
-    document.getElementById('formPhone').value = formatPhoneNumber(phoneData.number);
+    phoneInput.value = formatPhoneNumber(phoneData.number);
   } else {
     populateCountryCodes('+90');
   }
