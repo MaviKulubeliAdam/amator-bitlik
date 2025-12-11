@@ -515,6 +515,25 @@ async function loadUserCallsign() {
 }
 
 /**
+ * Kullanıcı verilerini form alanlarına doldurur
+ */
+function populateUserDataFields() {
+  // Kullanıcı bilgilerini formdaki gizli alanlara doldur
+  if (userData.name) document.getElementById('formSellerName').value = userData.name;
+  if (userData.location) document.getElementById('formLocation').value = userData.location;
+  if (userData.email) document.getElementById('formEmail').value = userData.email;
+  
+  // Telefonu parse et ve doldur
+  if (userData.phone) {
+    const phoneData = parsePhoneNumber(userData.phone);
+    populateCountryCodes(phoneData.dialCode);
+    document.getElementById('formPhone').value = formatPhoneNumber(phoneData.number);
+  } else {
+    populateCountryCodes('+90');
+  }
+}
+
+/**
  * Yeni ilan ekleme modalını açar
  */
 async function openAddListingModal() {
@@ -543,19 +562,8 @@ async function openAddListingModal() {
     // Kullanıcının tüm bilgilerini veritabanından al
     await loadUserData();
     
-    // Kullanıcı bilgilerini formdaki gizli alanlara doldur
-    if (userData.name) document.getElementById('formSellerName').value = userData.name;
-    if (userData.location) document.getElementById('formLocation').value = userData.location;
-    if (userData.email) document.getElementById('formEmail').value = userData.email;
-    
-    // Telefonu parse et ve doldur
-    if (userData.phone) {
-      const phoneData = parsePhoneNumber(userData.phone);
-      populateCountryCodes(phoneData.dialCode);
-      document.getElementById('formPhone').value = formatPhoneNumber(phoneData.number);
-    } else {
-      populateCountryCodes('+90');
-    }
+    // Kullanıcı bilgilerini formdaki alanlara doldur
+    populateUserDataFields();
     
     updatePreview();
     
@@ -578,19 +586,8 @@ async function openAddListingModal() {
     document.querySelector('.modal-header h2').textContent = 'Yeni İlan Ekle';
     document.getElementById('formSubmitBtn').textContent = 'İlanı Yayınla';
     
-    // Kullanıcı bilgilerini formdaki gizli alanlara doldur
-    if (userData.name) document.getElementById('formSellerName').value = userData.name;
-    if (userData.location) document.getElementById('formLocation').value = userData.location;
-    if (userData.email) document.getElementById('formEmail').value = userData.email;
-    
-    // Telefonu parse et ve doldur
-    if (userData.phone) {
-      const phoneData = parsePhoneNumber(userData.phone);
-      populateCountryCodes(phoneData.dialCode);
-      document.getElementById('formPhone').value = formatPhoneNumber(phoneData.number);
-    } else {
-      populateCountryCodes('+90');
-    }
+    // Kullanıcı bilgilerini formdaki alanlara doldur
+    populateUserDataFields();
     
     updatePreview();
     loadCities();
@@ -640,17 +637,8 @@ async function openEditListingModal(listingOrId) {
   // Çağrı işaretini ve diğer kullanıcı bilgilerini veritabanından al
   await loadUserData();
   
-  // Kullanıcı bilgilerini formdaki gizli alanlara doldur
-  if (userData.name) document.getElementById('formSellerName').value = userData.name;
-  if (userData.location) document.getElementById('formLocation').value = userData.location;
-  if (userData.email) document.getElementById('formEmail').value = userData.email;
-  
-  // Telefonu parse et ve doldur - veritabanından gelen kullanıcı bilgisini kullan
-  if (userData.phone) {
-    const phoneData = parsePhoneNumber(userData.phone);
-    populateCountryCodes(phoneData.dialCode);
-    document.getElementById('formPhone').value = formatPhoneNumber(phoneData.number);
-  }
+  // Kullanıcı bilgilerini formdaki alanlara doldur
+  populateUserDataFields();
   
   // Edit modda: DB çağrısı başarısızsa, ilandaki callsign'ı fallback olarak kullan
   if (!userCallsign || userCallsign === '' || userCallsign === null) {
@@ -2412,11 +2400,6 @@ window.editMyListing = async function(id) {
         // Kullanıcı bilgilerini veritabanından al
         await loadUserData();
         
-        // Kullanıcı bilgilerini formdaki gizli alanlara doldur
-        if (userData.name) document.getElementById('formSellerName').value = userData.name;
-        if (userData.location) document.getElementById('formLocation').value = userData.location;
-        if (userData.email) document.getElementById('formEmail').value = userData.email;
-        
         // Dropdown'ları kur
         setupCategoryDropdown();
         setupConditionDropdown();
@@ -2432,12 +2415,8 @@ window.editMyListing = async function(id) {
         if (conditionInput) conditionInput.value = conditionLabel;
         if (conditionHidden) conditionHidden.value = conditionValue;
         
-        // Telefonu parse et ve doldur - veritabanından gelen kullanıcı bilgisini kullan
-        if (userData.phone) {
-          const phoneData = parsePhoneNumber(userData.phone);
-          populateCountryCodes(phoneData.dialCode);
-          document.getElementById('formPhone').value = formatPhoneNumber(phoneData.number);
-        }
+        // Kullanıcı bilgilerini formdaki alanlara doldur
+        populateUserDataFields();
         
         // Modal başlığı ve submit butonunu özelleştir
         document.querySelector('.modal-header h2').textContent = 'Red Edilen İlanı Düzenle';

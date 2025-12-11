@@ -62,17 +62,17 @@
      </div>
      
 <div class="form-group" style="display: none;"><label for="formCallsign">Çağrı İşareti</label> <input type="text" id="formCallsign" placeholder="Örn: TA1ABC"></div>
-     <div class="form-group" style="display: none;"><label for="formSellerName">Ad Soyad *</label> <input type="text" id="formSellerName" placeholder="Adınız ve soyadınız"></div>
+     <div class="form-group" style="display: none;"><label for="formSellerName">Ad Soyad</label> <input type="text" id="formSellerName" placeholder="Adınız ve soyadınız"></div>
     <div class="form-group city-select-wrapper" style="display: none;">
-      <label for="formLocation">Konum *</label>
+      <label for="formLocation">Konum</label>
       <div class="city-select-container">
         <input type="text" id="formLocation" placeholder="Şehir seçin veya yazın..." autocomplete="off">
         <div class="city-dropdown" id="cityDropdown"></div>
       </div>
     </div>
-     <div class="form-group" style="display: none;"><label for="formEmail">E-posta *</label> <input type="email" id="formEmail" placeholder="ornek@email.com"></div>
+     <div class="form-group" style="display: none;"><label for="formEmail">E-posta</label> <input type="email" id="formEmail" placeholder="ornek@email.com"></div>
      <div class="form-group phone-group" style="display: none;">
-      <label for="formPhone">Telefon *</label>
+      <label for="formPhone">Telefon</label>
       <div class="phone-input-wrapper">
         <select id="formCountryCode" class="country-code-select">
           <!-- Will be populated by JS -->
