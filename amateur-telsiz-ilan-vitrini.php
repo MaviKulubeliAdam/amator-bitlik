@@ -1154,8 +1154,19 @@ class AmateurTelsizIlanVitrini {
         }
 
         $user_id = get_current_user_id();
-        $current_user = get_user_by('id', $user_id);
+        $callsign = $this->get_user_callsign($user_id);
 
+        wp_send_json_success(array('callsign' => $callsign));
+    }
+    
+    /**
+     * Kullanıcının çağrı işaretini veritabanından alır
+     * Önce amator_bitlik_kullanıcılar tablosundan, yoksa WordPress username'den
+     * 
+     * @param int $user_id WordPress kullanıcı ID'si
+     * @return string Çağrı işareti (büyük harfe çevrilmiş)
+     */
+    private function get_user_callsign($user_id) {
         global $wpdb;
         $users_table = $wpdb->prefix . 'amator_bitlik_kullanıcılar';
         
@@ -1170,11 +1181,13 @@ class AmateurTelsizIlanVitrini {
         if ($db_user && !empty($db_user->callsign)) {
             $callsign = $db_user->callsign;
         } else {
-            $callsign = $current_user->user_login;
+            $current_user = get_user_by('id', $user_id);
+            if ($current_user) {
+                $callsign = $current_user->user_login;
+            }
         }
-        $callsign = strtoupper(str_replace(' ', '', $callsign));
-
-        wp_send_json_success(array('callsign' => $callsign));
+        
+        return strtoupper(str_replace(' ', '', $callsign));
     }
 
     /**
@@ -1854,26 +1867,12 @@ class AmateurTelsizIlanVitrini {
     
     global $wpdb;
     $table_name = $wpdb->prefix . 'amator_ilanlar';
-    $users_table = $wpdb->prefix . 'amator_bitlik_kullanıcılar';
     
     $data = $_POST;
     $user_id = get_current_user_id();
     
     // Kullanıcının çağrı işaretini veritabanından al
-    $db_user = $wpdb->get_row($wpdb->prepare(
-        "SELECT callsign FROM $users_table WHERE user_id = %d",
-        $user_id
-    ));
-    
-    // Çağrı işareti: önce DB'den, yoksa WordPress username'den
-    $callsign = '';
-    if ($db_user && !empty($db_user->callsign)) {
-        $callsign = $db_user->callsign;
-    } else {
-        $current_user = get_user_by('id', $user_id);
-        $callsign = $current_user->user_login;
-    }
-    $callsign = strtoupper(str_replace(' ', '', $callsign));
+    $callsign = $this->get_user_callsign($user_id);
     
     // Gerekli alanları kontrol et (callsign hariç, artık veritabanından alınıyor)
     $required = ['title', 'category', 'brand', 'model', 'condition', 'price', 'description', 'seller_name', 'location', 'seller_email', 'seller_phone'];
@@ -2123,20 +2122,7 @@ class AmateurTelsizIlanVitrini {
     }
     
     // Kullanıcının çağrı işaretini veritabanından al
-    $db_user = $wpdb->get_row($wpdb->prepare(
-        "SELECT callsign FROM $users_table WHERE user_id = %d",
-        $user_id
-    ));
-    
-    // Çağrı işareti: önce DB'den, yoksa WordPress username'den
-    $callsign = '';
-    if ($db_user && !empty($db_user->callsign)) {
-        $callsign = $db_user->callsign;
-    } else {
-        $current_user = get_user_by('id', $user_id);
-        $callsign = $current_user->user_login;
-    }
-    $callsign = strtoupper(str_replace(' ', '', $callsign));
+    $callsign = $this->get_user_callsign($user_id);
     
     $table_name = $wpdb->prefix . 'amator_ilanlar';
     

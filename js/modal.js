@@ -483,10 +483,13 @@ async function loadUserCallsign() {
         callsignInput.value = result.data.callsign;
       }
     } else {
-      console.warn('Çağrı işareti yüklenemedi:', result);
+      const errorMessage = result.data && result.data.message 
+        ? result.data.message 
+        : 'Çağrı işareti bilgisi alınamadı';
+      console.warn('Çağrı işareti yükleme başarısız:', errorMessage, result);
     }
   } catch (error) {
-    console.error('Çağrı işareti yükleme hatası:', error);
+    console.error('Çağrı işareti yükleme hatası - Ağ veya sunucu sorunu:', error);
   }
 }
 
