@@ -83,26 +83,43 @@
       </div>
     </div>
     <div class="filter-group"><label class="filter-label">Fiyat Aralığı</label>
-      <div class="dropdown-filter" id="priceDropdown"><button type="button" class="filter-select dropdown-button" id="priceButton" aria-label="Fiyat aralığı filtresi"> <span id="priceButtonText">Tüm Fiyatlar</span> <span class="dropdown-arrow">▼</span> </button>
-        <div class="dropdown-menu" id="priceMenu">
-          <div class="dropdown-options" id="priceOptions">
-            <div class="dropdown-option selected" data-value="all">
-              Tüm Fiyatlar
+      <div class="dropdown-filter" id="priceDropdown">
+        <button type="button" class="filter-select dropdown-button" id="priceButton" aria-label="Fiyat aralığı filtresi">
+          <span id="priceButtonText">Tüm Fiyatlar</span>
+          <span class="dropdown-arrow">▼</span>
+        </button>
+        <div class="dropdown-menu price-slider-menu" id="priceMenu">
+          <div class="price-slider-container">
+            <div class="price-slider-header">
+              <div class="price-display">
+                <div class="price-input-group">
+                  <span class="price-label">Min</span>
+                  <input type="number" id="minPriceInput" class="price-input" value="0" min="0" max="100000" step="1000">
+                </div>
+                <span class="price-separator">-</span>
+                <div class="price-input-group">
+                  <span class="price-label">Max</span>
+                  <input type="text" id="maxPriceInput" class="price-input" value="Sınırsız" readonly style="cursor: pointer;">
+                </div>
+              </div>
             </div>
-            <div class="dropdown-option" data-value="0-1000">
-              0 - 1.000 ₺
+            <div class="range-slider-wrapper">
+              <div class="range-slider-track">
+                <div class="range-slider-range" id="priceSliderRange"></div>
+              </div>
+              <input type="range" id="minPriceSlider" class="range-slider" min="0" max="100000" value="0" step="1000">
+              <input type="range" id="maxPriceSlider" class="range-slider" min="0" max="100000" value="100000" step="1000">
             </div>
-            <div class="dropdown-option" data-value="1000-5000">
-              1.000 - 5.000 ₺
+            <div class="price-presets">
+              <button type="button" class="price-preset-btn" data-min="0" data-max="1000">0-1 bin</button>
+              <button type="button" class="price-preset-btn" data-min="1000" data-max="5000">1-5 bin</button>
+              <button type="button" class="price-preset-btn" data-min="5000" data-max="15000">5-15 bin</button>
+              <button type="button" class="price-preset-btn" data-min="15000" data-max="30000">15-30 bin</button>
+              <button type="button" class="price-preset-btn" data-min="30000" data-max="100000">30 bin+</button>
             </div>
-            <div class="dropdown-option" data-value="5000-15000">
-              5.000 - 15.000 ₺
-            </div>
-            <div class="dropdown-option" data-value="15000-30000">
-              15.000 - 30.000 ₺
-            </div>
-            <div class="dropdown-option" data-value="30000-999999">
-              30.000 ₺ +
+            <div class="price-actions">
+              <button type="button" class="price-reset-btn" id="priceResetBtn">Sıfırla</button>
+              <button type="button" class="price-apply-btn" id="priceApplyBtn">Uygula</button>
             </div>
           </div>
         </div>

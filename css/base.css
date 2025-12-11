@@ -215,6 +215,12 @@
       transform: translateY(-2px);
     }
 
+    .filter-select:hover {
+      background: rgba(255, 255, 255, 0.98);
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.15);
+      color: #667eea;
+    }
+
     .filter-select option {
       background: white;
       color: #1a1a1a;
@@ -254,7 +260,7 @@
 
     .dropdown-menu {
       position: absolute;
-      background: white;
+      background: #f8f9fa;
       border: none;
       border-radius: 16px;
       box-shadow: 0 12px 48px rgba(0, 0, 0, 0.2);
@@ -266,6 +272,274 @@
       top: calc(100% + 4px);
       left: 0;
       right: 0;
+    }
+
+    /* Özel Fiyat Filtresi */
+    .price-slider-menu {
+      border: 2px solid #e0e0e0;
+      max-height: none;
+      overflow: visible;
+      background: #ffffff;
+      width: 100%;
+      min-width: 380px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.24);
+      border-radius: 16px;
+      padding: 0;
+      isolation: isolate;
+      left: auto;
+      right: auto;
+      transform: none;
+    }
+
+    /* Fiyat dropdown açıkken görünür kıl */
+    #priceDropdown.open .price-slider-menu {
+      display: flex !important;
+      flex-direction: column;
+    }
+
+
+    .price-slider-container {
+      padding: 28px;
+      min-width: 380px;
+      background: #ffffff;
+      border-radius: 16px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .price-slider-header {
+      margin-bottom: 24px;
+    }
+
+    .price-display {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .price-input-group {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      background: #f8f9fa;
+      padding: 12px;
+      border-radius: 10px;
+      border: 2px solid #e0e0e0;
+      transition: all 0.3s;
+    }
+
+    .price-input-group:focus-within {
+      border-color: #667eea;
+      background: #ffffff;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .price-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .price-input {
+      border: none;
+      background: transparent;
+      font-size: 18px;
+      font-weight: 700;
+      color: #1a1a1a;
+      outline: none;
+      width: 100%;
+      -moz-appearance: textfield;
+    }
+
+    .price-input::-webkit-outer-spin-button,
+    .price-input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    .price-separator {
+      font-size: 20px;
+      font-weight: 600;
+      color: #ccc;
+      padding-top: 20px;
+    }
+
+    .range-slider-wrapper {
+      position: relative;
+      height: 50px;
+      margin-bottom: 24px;
+    }
+
+    .range-slider-track {
+      position: absolute;
+      width: 100%;
+      height: 6px;
+      background: #e0e0e0;
+      border-radius: 3px;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+
+    .range-slider-range {
+      position: absolute;
+      height: 100%;
+      background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+      border-radius: 3px;
+      transition: all 0.3s;
+    }
+
+    .range-slider {
+      position: absolute;
+      width: 100%;
+      height: 6px;
+      background: transparent;
+      pointer-events: none;
+      -webkit-appearance: none;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+
+    .range-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      background: #ffffff;
+      border: 3px solid #667eea;
+      border-radius: 50%;
+      cursor: pointer;
+      pointer-events: all;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      transition: all 0.3s;
+    }
+
+    .range-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .range-slider::-webkit-slider-thumb:active {
+      transform: scale(1.1);
+      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.6);
+    }
+
+    .range-slider::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      background: #ffffff;
+      border: 3px solid #667eea;
+      border-radius: 50%;
+      cursor: pointer;
+      pointer-events: all;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      transition: all 0.3s;
+    }
+
+    .range-slider::-moz-range-thumb:hover {
+      transform: scale(1.2);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .range-slider::-moz-range-thumb:active {
+      transform: scale(1.1);
+      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.6);
+    }
+
+    .price-presets {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .price-preset-btn {
+      flex: 1;
+      min-width: 85px;
+      padding: 10px 16px;
+      background: white;
+      color: #667eea;
+      border: 2px solid #667eea;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      white-space: nowrap;
+    }
+
+    .price-preset-btn:hover {
+      background: #667eea;
+      color: white;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    .price-preset-btn.active {
+      background: #667eea;
+      color: white;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    .price-actions {
+      display: flex;
+      gap: 12px;
+      padding-top: 16px;
+      border-top: 2px solid #f0f0f0;
+    }
+
+    .price-reset-btn {
+      flex: 1;
+      padding: 12px;
+      background: white;
+      color: #666;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .price-reset-btn:hover {
+      background: #f8f9fa;
+      border-color: #ccc;
+    }
+
+    .price-apply-btn {
+      flex: 2;
+      padding: 12px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    .price-apply-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+    }
+
+    .price-apply-btn:active {
+      transform: translateY(0);
+    }
+
+    @media (max-width: 480px) {
+      .price-presets {
+        flex-direction: column;
+      }
+
+      .price-preset-btn {
+        width: 100%;
+      }
     }
 
     .dropdown-filter.open .dropdown-menu {
@@ -339,7 +613,7 @@
     }
 
     .dropdown-option:hover {
-      background: linear-gradient(90deg, rgba(102, 126, 234, 0.08) 0%, transparent 100%);
+      background: #d4e5ff;
       color: #667eea;
     }
 
@@ -406,29 +680,46 @@
     }
 
     .add-listing-btn {
-      padding: 16px 36px;
-      background: linear-gradient(135deg, #ffffff 0%, #e8f0ff 100%);
-      color: #00349b;
-      border: 2px solid rgba(255, 255, 255, 0.5);
+      padding: 16px 40px;
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      color: white;
+      border: none;
       border-radius: 50px;
       font-size: 16px;
       font-weight: 700;
       cursor: pointer;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       white-space: nowrap;
-      box-shadow: 0 6px 20px rgba(255, 255, 255, 0.3);
+      box-shadow: 0 8px 24px rgba(245, 158, 11, 0.4);
       margin-left: auto;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .add-listing-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+      transition: left 0.5s;
     }
 
     .add-listing-btn:hover {
-      background: linear-gradient(135deg, #ffffff 0%, #f5f9ff 100%);
-      transform: translateY(-3px) scale(1.05);
-      box-shadow: 0 12px 32px rgba(255, 255, 255, 0.5);
-      border-color: rgba(255, 255, 255, 0.8);
+      background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+      transform: translateY(-4px);
+      box-shadow: 0 16px 40px rgba(245, 158, 11, 0.6);
+    }
+
+    .add-listing-btn:hover::before {
+      left: 100%;
     }
 
     .add-listing-btn:active {
-      transform: translateY(-1px) scale(1.02);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(245, 158, 11, 0.4);
     }
 
     .listings-wrapper {

@@ -51,11 +51,7 @@ function setupDropdowns() {
     applyFiltersAndRender();
   });
 
-  setupSingleSelectDropdown('price', (value) => {
-    currentPriceRangeFilter = value;
-    currentPage = 1;
-    applyFiltersAndRender();
-  });
+  setupPriceFilter();
 
   setupSingleSelectDropdown('sort', (value) => {
     currentSort = value;
@@ -115,6 +111,163 @@ function setupDropdowns() {
       }
     });
   });
+}
+
+/**
+ * Özel fiyat filtresi (slider + preset butonlar)
+ */
+function setupPriceFilter() {
+  const priceDropdown = document.getElementById('priceDropdown');
+  const priceButton = document.getElementById('priceButton');
+  const priceButtonText = document.getElementById('priceButtonText');
+  const minPriceInput = document.getElementById('minPriceInput');
+  const maxPriceInput = document.getElementById('maxPriceInput');
+  const minPriceSlider = document.getElementById('minPriceSlider');
+  const maxPriceSlider = document.getElementById('maxPriceSlider');
+  const priceSliderRange = document.getElementById('priceSliderRange');
+  const priceApplyBtn = document.getElementById('priceApplyBtn');
+  const priceResetBtn = document.getElementById('priceResetBtn');
+  const pricePresetBtns = document.querySelectorAll('.price-preset-btn');
+
+  if (!priceDropdown || !priceButton || !minPriceInput || !maxPriceInput || !minPriceSlider || !maxPriceSlider || !priceSliderRange) {
+    return;
+  }
+
+  const MAX_LIMIT = parseInt(maxPriceSlider.max, 10) || 100000;
+  let minPrice = 0;
+  let maxPrice = MAX_LIMIT;
+
+  const formatShort = (value) => {
+    if (value >= 1000) {
+      const bins = value / 1000;
+      const fixed = Number.isInteger(bins) ? bins.toFixed(0) : bins.toFixed(1);
+      return `${fixed} bin`;
+    }
+    return value.toString();
+  };
+
+  const updateSliderRange = () => {
+    const percent1 = (minPrice / MAX_LIMIT) * 100;
+    const percent2 = (maxPrice / MAX_LIMIT) * 100;
+    priceSliderRange.style.left = percent1 + '%';
+    priceSliderRange.style.width = (percent2 - percent1) + '%';
+  };
+
+  const updateMaxPriceDisplay = () => {
+    if (maxPrice >= MAX_LIMIT) {
+      maxPriceInput.value = 'Sınırsız';
+    } else {
+      maxPriceInput.value = formatShort(maxPrice);
+    }
+  };
+
+  const updatePresetButtons = () => {
+    pricePresetBtns.forEach(btn => {
+      const presetMin = parseInt(btn.dataset.min, 10);
+      const presetMax = parseInt(btn.dataset.max, 10);
+      if (minPrice === presetMin && maxPrice === presetMax) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
+  };
+
+  const applyFilter = () => {
+    if (minPrice === 0 && maxPrice === MAX_LIMIT) {
+      currentPriceRangeFilter = 'all';
+      priceButtonText.textContent = 'Tüm Fiyatlar';
+    } else {
+      currentPriceRangeFilter = `${minPrice}-${maxPrice}`;
+      if (maxPrice === MAX_LIMIT) {
+        priceButtonText.textContent = `₺${formatShort(minPrice)}+`;
+      } else {
+        priceButtonText.textContent = `₺${formatShort(minPrice)} - ₺${formatShort(maxPrice)}`;
+      }
+    }
+    currentPage = 1;
+    applyFiltersAndRender();
+    priceDropdown.classList.remove('open');
+  };
+
+  priceButton.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isOpen = priceDropdown.classList.contains('open');
+    document.querySelectorAll('.dropdown-filter.open').forEach(d => d.classList.remove('open'));
+    if (!isOpen) {
+      priceDropdown.classList.add('open');
+    }
+  });
+
+  minPriceInput.addEventListener('input', (e) => {
+    let value = parseInt(e.target.value, 10);
+    if (Number.isNaN(value)) value = 0;
+    value = Math.max(0, Math.min(value, maxPrice));
+    minPrice = value;
+    minPriceSlider.value = value;
+    minPriceInput.value = value;
+    updateSliderRange();
+    updatePresetButtons();
+  });
+
+  minPriceSlider.addEventListener('input', (e) => {
+    let value = parseInt(e.target.value, 10);
+    if (value > maxPrice) value = maxPrice;
+    minPrice = value;
+    minPriceInput.value = value;
+    updateSliderRange();
+    updatePresetButtons();
+  });
+
+  maxPriceSlider.addEventListener('input', (e) => {
+    let value = parseInt(e.target.value, 10);
+    if (value < minPrice) value = minPrice;
+    maxPrice = value;
+    updateMaxPriceDisplay();
+    updateSliderRange();
+    updatePresetButtons();
+  });
+
+  pricePresetBtns.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      minPrice = parseInt(btn.dataset.min, 10);
+      maxPrice = parseInt(btn.dataset.max, 10);
+      minPriceInput.value = minPrice;
+      minPriceSlider.value = minPrice;
+      maxPriceSlider.value = maxPrice;
+      updateMaxPriceDisplay();
+      updateSliderRange();
+      updatePresetButtons();
+    });
+  });
+
+  priceResetBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    minPrice = 0;
+    maxPrice = MAX_LIMIT;
+    minPriceInput.value = minPrice;
+    minPriceSlider.value = minPrice;
+    maxPriceSlider.value = maxPrice;
+    priceButtonText.textContent = 'Tüm Fiyatlar';
+    currentPriceRangeFilter = 'all';
+    updateMaxPriceDisplay();
+    updateSliderRange();
+    updatePresetButtons();
+    currentPage = 1;
+    applyFiltersAndRender();
+    priceDropdown.classList.remove('open');
+  });
+
+  priceApplyBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    applyFilter();
+  });
+
+  // Başlangıç görünümleri
+  updateSliderRange();
+  updateMaxPriceDisplay();
+  updatePresetButtons();
 }
 
 /**
