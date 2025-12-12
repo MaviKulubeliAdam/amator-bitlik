@@ -3827,6 +3827,11 @@ EOT
         $listings_table = $wpdb->prefix . 'amator_ilanlar';
         $users_table = $wpdb->prefix . 'amator_bitlik_kullanıcılar';
         $sent_emails_table = $wpdb->prefix . 'amator_bitlik_alarm';
+        $sent_items_table = $wpdb->prefix . 'amator_bitlik_alarm_items';
+        
+        // Gönderilmiş ilan kayıt tablosunu (yoksa) oluştur
+        $instance_for_table = new self();
+        $instance_for_table->create_email_sent_items_table();
         
         // Tüm uyarıları al
         $alerts = $wpdb->get_results("SELECT * FROM `{$alerts_table}`");
@@ -3881,8 +3886,25 @@ EOT
             // Eşleşen ilanları bul
             $matching_listings = self::find_matching_listings($alert);
             
+            // Daha önce bu kullanıcıya gönderilmiş ilanları ele
+            if (!empty($matching_listings)) {
+                $all_ids = array_map(function($l){ return (int)$l->id; }, $matching_listings);
+                $placeholders = implode(',', array_fill(0, count($all_ids), '%d'));
+                // Aynı kullanıcıya daha önce gönderilmiş olan ilan ID'lerini çek (alert'ten bağımsız, global kontrol)
+                $already_sent_ids = $wpdb->get_col($wpdb->prepare(
+                    "SELECT listing_id FROM `{$sent_items_table}` WHERE user_id = %d AND listing_id IN ($placeholders)",
+                    array_merge([(int)$alert->user_id], $all_ids)
+                ));
+                if (!empty($already_sent_ids)) {
+                    $already_sent_ids = array_map('intval', $already_sent_ids);
+                    $matching_listings = array_values(array_filter($matching_listings, function($l) use ($already_sent_ids){
+                        return !in_array((int)$l->id, $already_sent_ids, true);
+                    }));
+                }
+            }
+            
             if (empty($matching_listings)) {
-                error_log('[ATIV] Uyarı #' . $alert->id . ' için eşleşen ilan bulunamadı.');
+                error_log('[ATIV] Uyarı #' . $alert->id . ' için yeni (daha önce gönderilmemiş) eşleşen ilan bulunamadı.');
                 continue;
             }
             
@@ -3901,11 +3923,47 @@ EOT
                     'email' => $user->email
                 ], ['%d', '%d', '%d', '%s', '%s']);
                 
+                // Bu e-postada gönderilen ilanları tekil kaydet (tekrar gönderimi engellemek için)
+                $now = current_time('mysql');
+                foreach ($matching_listings as $listing) {
+                    $wpdb->query($wpdb->prepare(
+                        "INSERT INTO `{$sent_items_table}` (user_id, alert_id, listing_id, sent_at) VALUES (%d, %d, %d, %s)
+                         ON DUPLICATE KEY UPDATE sent_at = VALUES(sent_at)",
+                        (int)$alert->user_id,
+                        (int)$alert->id,
+                        (int)$listing->id,
+                        $now
+                    ));
+                }
+                
                 error_log('[ATIV] E-posta gönderildi: ' . $user->email);
             }
         }
         
         error_log('[ATIV] E-posta uyarıları kontrolü tamamlandı.');
+    }
+
+    /**
+     * Kullanıcıya gönderilmiş ilan kayıtlarını tutacak tabloyu oluşturur
+     * amator_bitlik_alarm_items: id, user_id, alert_id, listing_id, sent_at
+     */
+    private function create_email_sent_items_table() {
+        global $wpdb;
+        $charset_collate = $wpdb->get_charset_collate();
+        $table_name = $wpdb->prefix . 'amator_bitlik_alarm_items';
+        require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+        $sql = "CREATE TABLE IF NOT EXISTS `{$table_name}` (
+            id bigint(20) NOT NULL AUTO_INCREMENT,
+            user_id bigint(20) NOT NULL,
+            alert_id bigint(20) DEFAULT NULL,
+            listing_id bigint(20) NOT NULL,
+            sent_at datetime DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            UNIQUE KEY uniq_user_listing (user_id, listing_id),
+            KEY idx_user_alert (user_id, alert_id),
+            KEY idx_listing (listing_id)
+        ) $charset_collate;";
+        dbDelta($sql);
     }
     
     /**
