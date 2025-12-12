@@ -139,12 +139,35 @@ function parsePhoneNumber(fullPhone) {
   // Boşlukları temizle
   const cleaned = fullPhone.trim();
   
-  // + ile başlıyorsa ülke kodunu ayır
-  const match = cleaned.match(/^(\+\d+)\s*(.*)$/);
-  if (match) {
+  // Önce bilinen ülke kodlarını kontrol et (boşluksuz formatlar için)
+  const knownCodes = [
+    { code: '+90', length: 3 },   // Türkiye
+    { code: '+1', length: 2 },    // ABD/Kanada
+    { code: '+44', length: 3 },   // İngiltere
+    { code: '+49', length: 3 },   // Almanya
+    { code: '+33', length: 3 },   // Fransa
+    { code: '+358', length: 4 },  // Finlandiya
+    { code: '+420', length: 4 },  // Çekya
+    { code: '+971', length: 4 },  // BAE
+  ];
+  
+  // Bilinen kodlardan biriyle başlıyorsa
+  for (const { code, length } of knownCodes) {
+    if (cleaned.startsWith(code)) {
+      const remaining = cleaned.substring(length);
+      return {
+        dialCode: code,
+        number: remaining.replace(/\D/g, '')
+      };
+    }
+  }
+  
+  // Boşlukla ayrılmış format: +90 5551234567
+  const matchWithSpace = cleaned.match(/^(\+\d{1,4})\s+(.+)$/);
+  if (matchWithSpace) {
     return {
-      dialCode: match[1],
-      number: match[2].replace(/\D/g, '') // Numaradaki tüm boşluk ve karakterleri temizle
+      dialCode: matchWithSpace[1],
+      number: matchWithSpace[2].replace(/\D/g, '')
     };
   }
   
@@ -185,27 +208,41 @@ function setupModal() {
   // Fiyat alanı - sadece sayı ve ondalık nokta izin ver
   const priceInput = document.getElementById('formPrice');
   if (priceInput) {
-    priceInput.addEventListener('input', (e) => {
-      // Sadece sayılar, nokta ve virgüle izin ver
-      let value = e.target.value;
-      // Virgülü noktaya çevir
-      value = value.replace(',', '.');
-      // Sayı, nokta ve tire dışındaki karakterleri kaldır
-      value = value.replace(/[^0-9.]/g, '');
-      // Birden fazla nokta varsa sadece ilkini tut
-      const parts = value.split('.');
-      if (parts.length > 2) {
-        value = parts[0] + '.' + parts.slice(1).join('');
+    priceInput.addEventListener('keypress', (e) => {
+      // Rakamlar, nokta, virgül, backspace, delete, ok tuşlarına izin ver
+      const char = String.fromCharCode(e.which);
+      if (!/[0-9.,]/.test(char) && e.which !== 0 && e.which !== 8) {
+        e.preventDefault();
       }
-      e.target.value = value;
+      // Virgüle basıldıysa nokta olarak ekle
+      if (char === ',') {
+        e.preventDefault();
+        const start = e.target.selectionStart;
+        const end = e.target.selectionEnd;
+        const value = e.target.value;
+        // Zaten nokta varsa ekleme
+        if (!value.includes('.')) {
+          e.target.value = value.substring(0, start) + '.' + value.substring(end);
+          e.target.setSelectionRange(start + 1, start + 1);
+        }
+      }
+      // İkinci noktaya izin verme
+      if (char === '.' && e.target.value.includes('.')) {
+        e.preventDefault();
+      }
     });
     
     // Paste olayını da kontrol et
     priceInput.addEventListener('paste', (e) => {
       e.preventDefault();
       const pastedText = (e.clipboardData || window.clipboardData).getData('text');
-      const cleaned = pastedText.replace(',', '.').replace(/[^0-9.]/g, '');
-      document.execCommand('insertText', false, cleaned);
+      const cleaned = pastedText.replace(/,/g, '.').replace(/[^0-9.]/g, '');
+      // Birden fazla nokta varsa sadece ilkini tut
+      const parts = cleaned.split('.');
+      const finalValue = parts.length > 1 ? parts[0] + '.' + parts.slice(1).join('') : cleaned;
+      const start = e.target.selectionStart;
+      e.target.value = e.target.value.substring(0, start) + finalValue + e.target.value.substring(e.target.selectionEnd);
+      e.target.setSelectionRange(start + finalValue.length, start + finalValue.length);
     });
   }
   
@@ -545,6 +582,8 @@ async function loadUserCallsign() {
  * Kullanıcı verilerini form alanlarına doldurur
  */
 function populateUserDataFields() {
+  console.log('🔍 populateUserDataFields - userData:', userData);
+  
   // Kullanıcı bilgilerini formdaki gizli alanlara doldur (null check ile)
   const sellerNameInput = document.getElementById('formSellerName');
   const locationInput = document.getElementById('formLocation');
@@ -557,10 +596,14 @@ function populateUserDataFields() {
   
   // Telefonu parse et ve doldur
   if (phoneInput && userData.phone) {
+    console.log('🔍 populateUserDataFields - userData.phone:', userData.phone);
     const phoneData = parsePhoneNumber(userData.phone);
+    console.log('🔍 populateUserDataFields - phoneData:', phoneData);
     populateCountryCodes(phoneData.dialCode);
     phoneInput.value = formatPhoneNumber(phoneData.number);
+    console.log('🔍 populateUserDataFields - phoneInput.value set to:', phoneInput.value);
   } else {
+    console.log('🔍 populateUserDataFields - No phone data, using default +90');
     populateCountryCodes('+90');
   }
 }
@@ -1046,10 +1089,10 @@ async function handleFormSubmit(e) {
     video: isEditing && editingListing && editingListing.video ? editingListing.video : null, // Mevcut video URL'si (değiştirilmezse)
     emoji: uploadedImages.length > 0 ? null : "📻",
     callsign: userCallsign,
-    seller_name: document.getElementById('formSellerName').value.trim(),
-    location: document.getElementById('formLocation').value.trim(),
-    seller_email: document.getElementById('formEmail').value.trim(),
-    seller_phone: (document.getElementById('formCountryCode').value + ' ' + document.getElementById('formPhone').value.replace(/\s/g, '')).trim()
+    seller_name: userData.name || document.getElementById('formSellerName').value.trim(),
+    location: userData.location || document.getElementById('formLocation').value.trim(),
+    seller_email: userData.email || document.getElementById('formEmail').value.trim(),
+    seller_phone: userData.phone || ''
   };
 
   // Video zaten temp'e yüklenmiş, sadece URL'yi ekle

@@ -647,15 +647,15 @@ class AmateurTelsizIlanVitrini {
     
    private function enqueue_scripts() {
     // CSS dosyalarını kaydet ve yükle
-    wp_enqueue_style('ativ-base', ATIV_PLUGIN_URL . 'css/base.css', array(), '1.2.2');
-    wp_enqueue_style('ativ-components', ATIV_PLUGIN_URL . 'css/components.css', array('ativ-base'), '1.2.2');
-    wp_enqueue_style('ativ-forms', ATIV_PLUGIN_URL . 'css/forms.css', array('ativ-components'), '1.2.2');
+    wp_enqueue_style('ativ-base', ATIV_PLUGIN_URL . 'css/base.css', array(), '1.2.6');
+    wp_enqueue_style('ativ-components', ATIV_PLUGIN_URL . 'css/components.css', array('ativ-base'), '1.2.6');
+    wp_enqueue_style('ativ-forms', ATIV_PLUGIN_URL . 'css/forms.css', array('ativ-components'), '1.2.6');
     
     // JS dosyalarını kaydet ve yükle (sıralama önemli)
-    wp_enqueue_script('ativ-core', ATIV_PLUGIN_URL . 'js/core.js', array('jquery'), '1.2.2', true);
-    wp_enqueue_script('ativ-ui', ATIV_PLUGIN_URL . 'js/ui.js', array('ativ-core'), '1.2.2', true);
-    wp_enqueue_script('ativ-modal', ATIV_PLUGIN_URL . 'js/modal.js', array('ativ-ui'), '1.2.2', true);
-    wp_enqueue_script('ativ-terms', ATIV_PLUGIN_URL . 'js/terms.js', array('ativ-modal'), '1.2.2', true);
+    wp_enqueue_script('ativ-core', ATIV_PLUGIN_URL . 'js/core.js', array('jquery'), '1.2.6', true);
+    wp_enqueue_script('ativ-ui', ATIV_PLUGIN_URL . 'js/ui.js', array('ativ-core'), '1.2.6', true);
+    wp_enqueue_script('ativ-modal', ATIV_PLUGIN_URL . 'js/modal.js', array('ativ-ui'), '1.2.6', true);
+    wp_enqueue_script('ativ-terms', ATIV_PLUGIN_URL . 'js/terms.js', array('ativ-modal'), '1.2.6', true);
     
     // AJAX parametrelerini JavaScript'e aktar
     $current_user_id = get_current_user_id();
