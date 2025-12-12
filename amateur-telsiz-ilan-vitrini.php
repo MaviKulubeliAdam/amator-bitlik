@@ -312,6 +312,9 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+// REST API'yi yükle (mobil uygulamalar ve dış kaynaklar için)
+require_once ATIV_PLUGIN_PATH . 'includes/api/class-ativ-rest-api.php';
+
 class AmateurTelsizIlanVitrini {
     
     public function __construct() {
