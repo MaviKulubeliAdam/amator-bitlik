@@ -1,0 +1,98 @@
+API ENDPOINT ADRESLERİ
+======================
+Domain: https://ta4aqg.tr
+Namespace: amator-bitlik/v1
+Base URL: https://ta4aqg.tr/wp-json/amator-bitlik/v1
+
+İLAN İŞLEMLERİ
+==============
+GET https://ta4aqg.tr/wp-json/amator-bitlik/v1/listings
+- Açıklama: Tüm ilanları listele (filtreleme seçenekleriyle)
+- Parametreler: page, per_page, status, category, search, location, min_price, max_price, orderby, order
+- Yetkilendirme: Gerek yok
+
+GET https://ta4aqg.tr/wp-json/amator-bitlik/v1/listings/{id}
+- Açıklama: Tek bir ilanı getir
+- Parametreler: id (zorunlu)
+- Yetkilendirme: Gerek yok
+
+POST https://ta4aqg.tr/wp-json/amator-bitlik/v1/listings
+- Açıklama: Yeni ilan oluştur
+- Parametreler: title, category, brand, model, condition, price, currency, description, location (zorunlu alanlar)
+- Yetkilendirme: Giriş gerekli
+- Yanıt: Oluşturulan ilan bilgisi (HTTP 201)
+
+PUT https://ta4aqg.tr/wp-json/amator-bitlik/v1/listings/{id}
+- Açıklama: İlan güncelle
+- Parametreler: id (zorunlu), title, category, brand, model, condition, price, currency, description, location, seller_name, seller_email, seller_phone
+- Yetkilendirme: Giriş gerekli + İlan sahibi olmak zorunlu
+- Yanıt: Güncellenen ilan bilgisi (HTTP 200)
+
+PATCH https://ta4aqg.tr/wp-json/amator-bitlik/v1/listings/{id}
+- Açıklama: İlan kısmen güncelle
+- Parametreler: id (zorunlu), güncellenebilir alanlar
+- Yetkilendirme: Giriş gerekli + İlan sahibi olmak zorunlu
+- Yanıt: Güncellenen ilan bilgisi (HTTP 200)
+
+DELETE https://ta4aqg.tr/wp-json/amator-bitlik/v1/listings/{id}
+- Açıklama: İlan sil
+- Parametreler: id (zorunlu)
+- Yetkilendirme: Giriş gerekli + İlan sahibi olmak zorunlu
+- Yanıt: Başarı mesajı (HTTP 200)
+
+
+KATEGORİ VE KONUM
+=================
+GET https://ta4aqg.tr/wp-json/amator-bitlik/v1/categories
+- Açıklama: Kategorileri listele
+- Kategoriler: transceiver, antenna, amplifier, accessory, other
+- Yetkilendirme: Gerek yok
+
+GET https://ta4aqg.tr/wp-json/amator-bitlik/v1/cities
+- Açıklama: Şehirleri listele
+- Yetkilendirme: Gerek yok
+
+
+KULLANICI İŞLEMLERİ
+===================
+GET https://ta4aqg.tr/wp-json/amator-bitlik/v1/user/profile
+- Açıklama: Giriş yapan kullanıcının profil bilgisini getir
+- Yetkilendirme: Giriş gerekli
+
+POST https://ta4aqg.tr/wp-json/amator-bitlik/v1/user/profile
+- Açıklama: Kullanıcı profilini güncelle
+- Parametreler: name, callsign, phone, location
+- Yetkilendirme: Giriş gerekli
+- Yanıt: Başarı mesajı (HTTP 200)
+
+GET https://ta4aqg.tr/wp-json/amator-bitlik/v1/user/listings
+- Açıklama: Giriş yapan kullanıcının ilanlarını listele
+- Parametreler: page, per_page
+- Yetkilendirme: Giriş gerekli
+
+
+KİMLİK DOĞRULAMA
+=================
+POST https://ta4aqg.tr/wp-json/amator-bitlik/v1/auth/login
+- Açıklama: Kullanıcı giriş yap
+- Parametreler: username, password (zorunlu)
+- Yetkilendirme: Gerek yok
+- Yanıt: Kullanıcı bilgisi ve token (HTTP 200)
+
+POST https://ta4aqg.tr/wp-json/amator-bitlik/v1/auth/logout
+- Açıklama: Kullanıcı çıkış yap
+- Yetkilendirme: Giriş gerekli
+- Yanıt: Başarı mesajı (HTTP 200)
+
+GET https://ta4aqg.tr/wp-json/amator-bitlik/v1/auth/nonce
+- Açıklama: REST API için nonce üret
+- Yetkilendirme: Giriş gerekli
+- Yanıt: Nonce değeri (HTTP 200)
+
+
+CORS VE GÜVENLİK
+================
+- Tüm API yanıtlarına CORS başlıkları eklenir
+- SameSite çerezler: None; Secure
+- Kimlik doğrulama: WordPress Nonce veya X-WP-Nonce header'ı
+- Yetkilendirme: check_user_permission metodu ile doğrulanır
