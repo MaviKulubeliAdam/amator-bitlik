@@ -1,0 +1,48 @@
+Amatör Bitlik REST API Özeti
+
+- Base URL: https://test.ta4aqg.tr/wp-json/amator-bitlik/v1
+- Kimlik Doğrulama: Cookie + X-WP-Nonce (login sonrası /auth/nonce ile alınır)
+- İçerik Türü: application/json
+
+Genel (Public) Endpoints
+- GET /listings: Onaylı ilanları listeler; filtreleme, sıralama ve sayfalama destekler.
+  - Parametreler: page (int, varsayılan 1), per_page (int, varsayılan 20), status (string, varsayılan approved), category (string), search (string), location (string), min_price (number), max_price (number), orderby (created_at|price|title|updated_at), order (ASC|DESC)
+- GET /listings/{id}: Tek bir ilan detayını döndürür.
+- GET /categories: Kategori listesini döndürür.
+- GET /cities: Şehir listesini döndürür.
+
+Kimlikli (Login gerektirir) Endpoints
+- POST /auth/login: Kullanıcı adı ve şifre ile giriş yapar.
+  - Gövde: { username, password }
+  - Döner: success, user bilgisi
+  - Not: Girişten sonra /auth/nonce çağrılmalı.
+- GET /auth/nonce: Geçerli oturum için REST nonce üretir.
+  - Kullanım: Sonraki isteklerde header: X-WP-Nonce
+- POST /auth/logout: Aktif oturumu kapatır.
+
+Kullanıcı
+- GET /user/profile: Mevcut kullanıcının profil bilgilerini döndürür (username, email, name, callsign, phone, location).
+- POST /user/profile: Profil bilgilerini günceller (name, callsign, phone, location).
+
+İlanlar (Login gerektirir)
+- POST /listings: Yeni ilan oluşturur.
+  - Gövde (gerekli alanlar): { title, category, brand, model, condition, price, currency, description }
+  - Satıcı ve konum alanları: seller_name, seller_phone, seller_email, location ve callsign sistem tarafından kullanıcı profilinden otomatik doldurulur.
+- PUT/PATCH /listings/{id}: İlanı günceller (sadece sahibi).
+  - Gövde (isteğe bağlı alanlar): title, category, brand, model, condition, price, currency, description, location, seller_name, seller_email, seller_phone
+- DELETE /listings/{id}: İlanı siler (sadece sahibi).
+
+Kullanıcı İlanları
+- GET /user/listings: Mevcut kullanıcının ilanlarını listeler.
+  - Parametreler: page (int, varsayılan 1), per_page (int, varsayılan 20)
+
+Kimlik Doğrulama Akışı
+- 1) POST /auth/login (Cookie set edilir)
+- 2) GET /auth/nonce (Nonce alınır)
+- 3) Kimlikli isteklerde header: X-WP-Nonce ve credentials: include (tarayıcı) / cookie jar (CLI)
+
+Notlar ve Davranışlar
+- CORS: Origin eşleşirse Access-Control-Allow-Origin, Allow-Credentials başlıkları sunulur; preflight OPTIONS istekleri 200 döner.
+- Çerezler: SameSite=None; Secure (HTTPS altında), cross-site fetch için uygundur.
+- Fiyat alanı: number; REST sanitizer ile güvenli şekilde işlenir.
+- Yanıt biçimi: { success: boolean, data?: herhangi, message?: string, pagination?: { total, pages, current_page, per_page } }
