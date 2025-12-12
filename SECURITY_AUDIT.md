@@ -1,5 +1,5 @@
 # Güvenlik ve Performans Analizi Raporu
-**Tarih:** 10 Aralık 2024  
+**Tarih:** 10 Aralık 2025
 **Plugin:** WP-Amator-Bitlik (Amatör Telsiz İlan Vitrini)  
 **Versiyon:** 1.1
 
