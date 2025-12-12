@@ -67,7 +67,9 @@
         if (false !== $cached_data && isset($cached_data['total_amount'])) {
             $total_amount = $cached_data['total_amount'];
         } else {
-            $all_listings = $wpdb->get_results("SELECT price, currency FROM $table_name WHERE status != 'rejected'", ARRAY_A);
+            // esc_sql kullanarak extra güvenlik (wpdb->prefix zaten güvenli olsa da)
+            $safe_table = esc_sql($table_name);
+            $all_listings = $wpdb->get_results("SELECT price, currency FROM `{$safe_table}` WHERE status != 'rejected'", ARRAY_A);
             $total_amount = 0;
             foreach ($all_listings as $listing) {
                 $total_amount += $this->convert_to_tl($listing['price'], $listing['currency']);
