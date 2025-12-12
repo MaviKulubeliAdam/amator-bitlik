@@ -43,7 +43,7 @@
      </div>
      
      <div class="form-group"><label for="formPrice">Fiyat *</label>
-      <div style="display: flex; gap: 12px;"><input type="number" id="formPrice" required min="0" step="0.01" placeholder="0" pattern="[0-9]*\.?[0-9]*" inputmode="decimal" style="flex: 2;"> <select id="formCurrency" required style="flex: 1; padding: 14px 16px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 15px;"> <option value="TRY">₺ TRY</option> <option value="USD">$ USD</option> <option value="EUR">€ EUR</option> </select></div>
+      <div style="display: flex; gap: 12px;"><input type="number" id="formPrice" required min="0" step="0.01" placeholder="0" pattern="[0-9]*\.?[0-9]*" inputmode="decimal" style="flex: 2;"> <select id="formCurrency" required style="flex: 1;"> <option value="TRY">₺ TRY</option> <option value="USD">$ USD</option> <option value="EUR">€ EUR</option> </select></div>
      </div>
      <div class="form-group"><label for="formDescription">Açıklama *</label> <textarea id="formDescription" required placeholder="Ürün hakkında detaylı bilgi verin..."></textarea></div>
      <div class="form-group"><label>Ürün Görselleri (Maksimum 5 adet)</label>
