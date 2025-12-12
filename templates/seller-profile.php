@@ -94,10 +94,11 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
-<script src="<?php echo plugins_url('js/profile.js', dirname(__FILE__)); ?>"></script>
+<script src="<?php echo plugins_url('js/profile.js', dirname(__FILE__)); ?>?ver=1.2.8"></script>
 
 <div id="bitlik-profile-container" class="bitlik-profile-wrapper">
     <style>
+        /* Profile Styles v2.2 - Updated 2025-12-12 15:45 */
         .search-alert-card {border:1px solid #e5e7eb;border-radius:12px;padding:18px 20px;box-shadow:0 2px 8px rgba(0,0,0,0.08);background:#fff;margin-bottom:14px;display:flex;justify-content:space-between;gap:16px;align-items:flex-start;}
         .search-alert-card h4 {margin:0 0 12px 0;font-size:17px;font-weight:700;color:#1e293b;border-bottom:2px solid #f1f5f9;padding-bottom:8px;}
         .search-alert-card .alert-meta {display:flex;flex-direction:column;gap:10px;color:#475569;font-size:13px;line-height:1.6;}
@@ -161,10 +162,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="form-group">
                     <label for="profilePhone">Telefon</label>
                     <div class="phone-input-wrapper" style="display: flex; gap: 10px;">
-                        <select id="profileCountryCode" required style="flex: 0 0 80px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
+                        <select id="profileCountryCode" required style="flex: 0 0 100px; min-width: 100px;">
                             <!-- Dinamik olarak JS tarafından doldurulacak -->
                         </select>
-                        <input type="tel" id="profilePhone" placeholder="555 123 4567" maxlength="13" pattern="[0-9\s]{10,13}" style="flex: 1;">
+                        <input type="tel" id="profilePhone" placeholder="555 123 4567" maxlength="13" pattern="[0-9\s]{10,13}" style="flex: 1; padding: 12px 16px !important; border: 1px solid #e0e0e0 !important; border-radius: 12px !important; background: #fafafa !important;">
                     </div>
                     <small style="color: #666; margin-top: 5px; display: block;">10 haneli numaranızı girin (başında 0 olmadan)</small>
                 </div>
@@ -424,20 +425,22 @@ if (file_exists($plugin_dir . '/templates/partial-modal.php')) {
 .form-group input,
 .form-group textarea,
 .form-group select {
-    padding: 12px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    font-size: 14px;
+    padding: 12px 16px !important;
+    border: 1px solid #e0e0e0 !important;
+    border-radius: 12px !important;
+    font-size: 14px !important;
     font-family: inherit;
-    transition: border-color 0.3s;
+    transition: all 0.3s;
+    background: #fafafa !important;
 }
 
 .form-group input:focus,
 .form-group textarea:focus,
 .form-group select:focus {
     outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    border-color: #667eea !important;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
+    background: #ffffff !important;
 }
 
 .form-row {

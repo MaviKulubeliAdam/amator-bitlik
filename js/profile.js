@@ -102,16 +102,18 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        // Telefon formatı kontrolü (örnek: +90 5XX XXX XXXX)
-        const phoneRegex = /^\+90\s?5\d{2}\s?\d{3}\s?\d{2}\s?\d{2}$/;
+        // Telefon formatı kontrolü
+        // +90 ile başlayıp 10 haneli olmalı (boşluksuz veya boşluklu)
+        const phoneWithoutSpaces = phone.replace(/\s/g, '');
+        const phoneRegex = /^\+90\d{10}$/;
         console.log('[PROFILE DEBUG] Telefon regex testi:');
         console.log('[PROFILE DEBUG] Regex:', phoneRegex);
-        console.log('[PROFILE DEBUG] Test değeri:', phone);
-        console.log('[PROFILE DEBUG] Regex sonucu:', phoneRegex.test(phone));
+        console.log('[PROFILE DEBUG] Test değeri (boşluksuz):', phoneWithoutSpaces);
+        console.log('[PROFILE DEBUG] Regex sonucu:', phoneRegex.test(phoneWithoutSpaces));
         
-        if (!phoneRegex.test(phone)) {
+        if (!phoneRegex.test(phoneWithoutSpaces)) {
             console.log('[PROFILE DEBUG] HATA: Telefon formatı yanlış - ' + phone);
-            showMessage('Telefon formatı: +90 5XX XXX XX XX', false);
+            showMessage('Telefon formatı: +90 ile başlamalı ve 10 haneli olmalı (örn: +90 555 123 4567)', false);
             return;
         }
 

@@ -57,10 +57,27 @@
         $total_users = $wpdb->get_var("SELECT COUNT(DISTINCT user_id) FROM $table_name");
         
         // Toplam değer hesaplaması - tüm fiyatları TL'ye dönüştür
-        $all_listings = $wpdb->get_results("SELECT price, currency FROM $table_name", ARRAY_A);
-        $total_amount = 0;
-        foreach ($all_listings as $listing) {
-            $total_amount += $this->convert_to_tl($listing['price'], $listing['currency']);
+        // NOT: İleride performans için price_in_tl kolonu eklenebilir ve trigger ile güncellenebilir
+        // Böylece SQL SUM() kullanılarak direkt hesaplanabilir
+        
+        // Cache kontrolü - 5 dakika cache
+        $cache_key = 'ativ_admin_stats_' . md5($table_name);
+        $cached_data = get_transient($cache_key);
+        
+        if (false !== $cached_data && isset($cached_data['total_amount'])) {
+            $total_amount = $cached_data['total_amount'];
+        } else {
+            // wpdb->prepare kullanarak tam güvenlik
+            $all_listings = $wpdb->get_results($wpdb->prepare(
+                "SELECT price, currency FROM `{$table_name}` WHERE status != %s",
+                'rejected'
+            ), ARRAY_A);
+            $total_amount = 0;
+            foreach ($all_listings as $listing) {
+                $total_amount += $this->convert_to_tl($listing['price'], $listing['currency']);
+            }
+            // Cache kaydet (5 dakika)
+            set_transient($cache_key, array('total_amount' => $total_amount), 5 * MINUTE_IN_SECONDS);
         }
         
         // Kategorileri al
